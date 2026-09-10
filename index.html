@@ -140,18 +140,25 @@ function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({"&":"&
 function fmtMoney(n){ return "$" + Math.round(n||0).toLocaleString(); }
 function fmtDate(s){ if(!s) return ""; try{ return new Date(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}catch(e){return s;} }
 
-// PostgREST caps a single request at 1000 rows. Get the total count first,
-// then fire every page in parallel instead of paging sequentially -- for
-// ~25k-row tables (engagements, engagement_contacts) this turns ~25
-// round-trips stacked one after another into one wave of parallel requests,
-// which is most of where the original ~10s load time went.
-async function fetchAll(table, columns){
+// PostgREST caps a single request at 1000 rows. Fire every page in parallel
+// instead of paging sequentially. `approxCount`, when known ahead of time
+// (from meta.last_refresh, which already stores each table's row count from
+// the last pull -- free, no query needed), skips an exact COUNT(*) entirely.
+// An exact count on a ~25k-row table with RLS forces a full scan and was
+// nearly as slow as the sequential paging it replaced. Without a hint, falls
+// back to PostgREST's "estimated" count (reads Postgres's planner
+// statistics, not a real scan -- fast but approximate). Either way, a
+// trailing fetch loop catches any rows the estimate undercounted.
+async function fetchAll(table, columns, approxCount){
   const pageSize = 1000;
-  const { count, error: countErr } = await sb.from(table).select(columns, { count: "exact", head: true });
-  if(countErr) throw new Error(`${table} count: ${countErr.message}`);
-  if(!count) return [];
-  const pages = Math.ceil(count / pageSize);
-  const results = await Promise.all(
+  let count = approxCount;
+  if(count == null){
+    const { count: estimated, error: countErr } = await sb.from(table).select(columns, { count: "estimated", head: true });
+    if(countErr) throw new Error(`${table} count: ${countErr.message}`);
+    count = estimated || 0;
+  }
+  const pages = Math.max(1, Math.ceil(count / pageSize));
+  let results = await Promise.all(
     Array.from({ length: pages }, (_, i) => {
       const from = i * pageSize;
       return sb.from(table).select(columns).range(from, from + pageSize - 1).then(({ data, error }) => {
@@ -160,18 +167,37 @@ async function fetchAll(table, columns){
       });
     })
   );
-  return results.flat();
+  let out = results.flat();
+  // Safety net: if the count hint undercounted, keep fetching sequentially
+  // past what was requested until a short page confirms we've reached the end.
+  while(results[results.length - 1]?.length === pageSize){
+    const from = out.length;
+    const { data, error } = await sb.from(table).select(columns).range(from, from + pageSize - 1);
+    if(error) throw new Error(`${table} trailing page: ${error.message}`);
+    out = out.concat(data);
+    results = [data];
+    if(data.length < pageSize) break;
+  }
+  return out;
 }
 
 async function loadData(){
-  const [companies, contacts, deals, engagements, engagementContacts, metaRows] = await Promise.all([
-    fetchAll("companies", "*"),
-    fetchAll("contacts", "*"),
-    fetchAll("deals", "*"),
-    fetchAll("engagements", "*"),
+  const t0 = performance.now();
+  const mark = (label) => console.log(`[heatmap] ${label} @ ${Math.round(performance.now() - t0)}ms`);
+
+  const { data: metaRowsInitial } = await sb.from("meta").select("*").eq("key", "last_refresh");
+  mark("meta fetched");
+  const lastCounts = metaRowsInitial?.find(r => r.key === "last_refresh")?.payload || {};
+
+  const [companies, contacts, deals, engagements, engagementContacts] = await Promise.all([
+    fetchAll("companies", "*", lastCounts.company_count),
+    fetchAll("contacts", "*", lastCounts.contact_count),
+    fetchAll("deals", "*", lastCounts.deal_count),
+    fetchAll("engagements", "*", lastCounts.engagement_count),
     fetchAll("engagement_contacts", "engagement_id,contact_id"),
-    sb.from("meta").select("*").eq("key", "last_refresh"),
   ]);
+  mark("all tables fetched");
+  const metaRows = { data: metaRowsInitial };
 
   const contactsById = new Map(contacts.map(c => [c.id, c]));
   const contactsByCompany = new Map();
@@ -279,6 +305,7 @@ async function loadData(){
       ownerName: co.owner_name,
     };
   });
+  mark("aggregation computed");
 
   const meta = (metaRows.data || []).find(r => r.key === "last_refresh");
   const asof = document.getElementById("asof");
@@ -501,10 +528,12 @@ async function boot(session){
   document.getElementById("gate").hidden = true;
   document.getElementById("app").hidden = false;
 
+  const bootT0 = performance.now();
   try{
     await loadData();
     populateRepFilter();
     render();
+    console.log(`[heatmap] fully rendered @ ${Math.round(performance.now() - bootT0)}ms total (see [heatmap] marks above for the breakdown)`);
   } catch(err){
     document.querySelector("#grid tbody").innerHTML = `<tr><td class="empty" colspan="20">Error loading data: ${esc(err.message||String(err))}</td></tr>`;
   }
