@@ -1,0 +1,13 @@
+{
+  "name": "vetro-account-heatmap-pull",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Daily HubSpot pull for the VETRO Account Heatmap, run via GitHub Actions.",
+  "scripts": {
+    "pull": "node pull-hubspot.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
