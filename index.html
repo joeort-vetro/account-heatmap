@@ -127,6 +127,7 @@ const PERSONA_LABEL_FULL = {
 const ENGAGEMENT_TYPES = [["calls","Calls"],["emails","Emails"],["meetings","Meetings"]];
 
 let ALL = [];
+let REP_NAMES = {};
 
 function tier(n, yellowAt, greenAt){
   if(n >= greenAt) return "g";
@@ -187,6 +188,11 @@ async function loadData(){
     if(!contactNamesByEngagement.has(ec.engagement_id)) contactNamesByEngagement.set(ec.engagement_id, []);
     contactNamesByEngagement.get(ec.engagement_id).push(name);
   }
+  // rep_name is already resolved server-side (pull-hubspot.mjs looks up
+  // HubSpot owner names) -- build the id->name map straight from the
+  // engagement rows themselves for the rep filter dropdown.
+  REP_NAMES = {};
+  for(const e of engagements) if(e.rep_id && e.rep_name) REP_NAMES[e.rep_id] = e.rep_name;
 
   const now = new Date();
   const d30cutoff = new Date(now - 30*86400000);
@@ -448,17 +454,23 @@ function populateRepFilter(){
   const repSel = document.getElementById("repFilter");
   const repIdsSeen = new Set();
   ALL.forEach(c => (c.repIds||[]).forEach(r => repIdsSeen.add(r)));
-  const repNames = {};
-  for(const c of ALL) for(const e of (c.recentEngagements||[])) if(e.rep) repNames[e.rep] = e.rep;
-  // rep ids are already resolved to names server-side (rep_name), so the
-  // "id" stored in repIds is really the HubSpot owner id used only for
-  // filtering -- display uses whatever name is attached to that id's
-  // engagements.
-  Array.from(repIdsSeen).sort().forEach(r => {
+  const named = Array.from(repIdsSeen).filter(r => REP_NAMES[r]).sort((a,b) => REP_NAMES[a].localeCompare(REP_NAMES[b]));
+  const unnamed = Array.from(repIdsSeen).filter(r => !REP_NAMES[r]).sort((a,b) => Number(a) - Number(b));
+  named.forEach(r => {
     const opt = document.createElement("option");
-    opt.value = r; opt.textContent = r;
+    opt.value = r; opt.textContent = REP_NAMES[r];
     repSel.appendChild(opt);
   });
+  if(unnamed.length){
+    const grp = document.createElement("optgroup");
+    grp.label = "Unidentified (no HubSpot owner record)";
+    unnamed.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r; opt.textContent = r;
+      grp.appendChild(opt);
+    });
+    repSel.appendChild(grp);
+  }
 }
 
 let booted = false;

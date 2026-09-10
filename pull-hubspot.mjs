@@ -189,14 +189,33 @@ async function main() {
 
     // 1. Closed-stage ids across ALL deal pipelines -- prior-vs-open is
     // account-wide (any pipeline), not scoped to New Business/Expansion like
-    // the sibling deal-matrix build.
+    // the sibling deal-matrix build. Also build pipeline/stage id -> label
+    // maps here -- HubSpot's deal properties API returns internal ids
+    // (e.g. "5452187"), not the human-readable names shown in the UI.
     const pipelines = await hs("/crm/v3/pipelines/deals");
     const closedStageIds = new Set();
+    const pipelineLabels = {};
+    const stageLabels = {};
     for (const pl of pipelines.results) {
+      pipelineLabels[pl.id] = pl.label;
       for (const st of pl.stages) {
+        stageLabels[st.id] = st.label;
         if (st.metadata?.isClosed === "true" || st.metadata?.isClosed === true) closedStageIds.add(st.id);
       }
     }
+
+    // Lifecycle stage is also a HubSpot enumeration property -- fetch its
+    // options once per object type to map internal values (e.g.
+    // "opportunity") to display labels (e.g. "Opportunity").
+    const [companyLifecycleProp, contactLifecycleProp] = await Promise.all([
+      hs("/crm/v3/properties/companies/lifecyclestage"),
+      hs("/crm/v3/properties/contacts/lifecyclestage"),
+    ]);
+    const companyLifecycleLabels = {};
+    for (const opt of companyLifecycleProp.options ?? []) companyLifecycleLabels[opt.value] = opt.label;
+    const contactLifecycleLabels = {};
+    for (const opt of contactLifecycleProp.options ?? []) contactLifecycleLabels[opt.value] = opt.label;
+
     await markStage("pipelines_loaded");
 
     // 2. Companies matching Strategic (icp_target = true) -- the live account list.
@@ -247,7 +266,7 @@ async function main() {
     const companyRows = companies.map((c) => ({
       id: c.id,
       name: c.properties.name || "(no name)",
-      lifecycle_stage: c.properties.lifecyclestage || null,
+      lifecycle_stage: c.properties.lifecyclestage ? (companyLifecycleLabels[c.properties.lifecyclestage] || c.properties.lifecyclestage) : null,
       country: c.properties.country || null,
       hubspot_url: `https://app.hubspot.com/contacts/8186371/record/0-2/${c.id}`,
       contact_count: (companyContacts[c.id] || []).length,
@@ -277,7 +296,7 @@ async function main() {
           title: p.jobtitle || null,
           email: p.email || null,
           phone: p.phone || null,
-          lifecycle_stage: p.lifecyclestage || null,
+          lifecycle_stage: p.lifecyclestage ? (contactLifecycleLabels[p.lifecyclestage] || p.lifecyclestage) : null,
           persona: p.hs_persona || null,
           persona_bucket: p.hs_persona ? (PERSONA_BUCKET[p.hs_persona] || "unclassified") : "unclassified",
           last_activity: p.hs_last_sales_activity_timestamp || null,
@@ -297,8 +316,8 @@ async function main() {
           id: did,
           company_id: companyId,
           name: p.dealname || "(no name)",
-          pipeline: p.pipeline || null,
-          stage: p.dealstage || null,
+          pipeline: p.pipeline ? (pipelineLabels[p.pipeline] || p.pipeline) : null,
+          stage: p.dealstage ? (stageLabels[p.dealstage] || p.dealstage) : null,
           amount: p.amount ? Number(p.amount) : 0,
           is_closed: p.dealstage ? closedStageIds.has(p.dealstage) : false,
           close_date: p.closedate || null,
@@ -366,12 +385,19 @@ async function main() {
         for (const [contactId, engIds] of Object.entries(contactToEng)) {
           for (const eid of engIds) {
             if (!recentIdSet.has(eid)) continue;
+            const p = props[eid] || {};
+            const detail = p.hs_call_title || p.hs_email_subject || p.hs_meeting_title || null;
+            // Gong auto-logs its own call/meeting records into HubSpot with
+            // a "[Gong] ..." title -- these are recording metadata, not real
+            // rep-initiated activity, so they'd double-count alongside the
+            // actual call/meeting engagement. Excluded entirely, not just
+            // hidden in the UI, so aggregate counts aren't inflated.
+            if (detail && detail.startsWith("[Gong]")) continue;
             const pairKey = `${eid}|${contactId}`;
             if (writtenPairs.has(pairKey)) continue;
             writtenPairs.add(pairKey);
             engagementContactRows.push({ engagement_id: eid, contact_id: contactId, contact_name: null });
 
-            const p = props[eid] || {};
             let direction = null;
             if (type === "calls") {
               direction = p.hs_call_direction === "OUTBOUND" ? "outbound" : p.hs_call_direction === "INBOUND" ? "inbound" : null;
@@ -390,7 +416,7 @@ async function main() {
                 occurred_at: p.hs_timestamp || startedAt,
                 rep_id: p.hubspot_owner_id || null,
                 rep_name: p.hubspot_owner_id ? (ownerNames[p.hubspot_owner_id] || p.hubspot_owner_id) : null,
-                detail: p.hs_call_title || p.hs_email_subject || p.hs_meeting_title || null,
+                detail,
                 last_refreshed: startedAt,
               });
             }
