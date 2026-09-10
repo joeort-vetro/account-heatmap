@@ -127,7 +127,6 @@ const PERSONA_LABEL_FULL = {
 const ENGAGEMENT_TYPES = [["calls","Calls"],["emails","Emails"],["meetings","Meetings"]];
 
 let ALL = [];
-let REP_NAMES = {};
 
 function tier(n, yellowAt, greenAt){
   if(n >= greenAt) return "g";
@@ -141,19 +140,27 @@ function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({"&":"&
 function fmtMoney(n){ return "$" + Math.round(n||0).toLocaleString(); }
 function fmtDate(s){ if(!s) return ""; try{ return new Date(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}catch(e){return s;} }
 
-// PostgREST caps a single request at 1000 rows -- page through with .range().
+// PostgREST caps a single request at 1000 rows. Get the total count first,
+// then fire every page in parallel instead of paging sequentially -- for
+// ~25k-row tables (engagements, engagement_contacts) this turns ~25
+// round-trips stacked one after another into one wave of parallel requests,
+// which is most of where the original ~10s load time went.
 async function fetchAll(table, columns){
   const pageSize = 1000;
-  let from = 0;
-  let out = [];
-  while(true){
-    const { data, error } = await sb.from(table).select(columns).range(from, from + pageSize - 1);
-    if(error) throw new Error(`${table}: ${error.message}`);
-    out = out.concat(data);
-    if(data.length < pageSize) break;
-    from += pageSize;
-  }
-  return out;
+  const { count, error: countErr } = await sb.from(table).select(columns, { count: "exact", head: true });
+  if(countErr) throw new Error(`${table} count: ${countErr.message}`);
+  if(!count) return [];
+  const pages = Math.ceil(count / pageSize);
+  const results = await Promise.all(
+    Array.from({ length: pages }, (_, i) => {
+      const from = i * pageSize;
+      return sb.from(table).select(columns).range(from, from + pageSize - 1).then(({ data, error }) => {
+        if(error) throw new Error(`${table} page ${i}: ${error.message}`);
+        return data;
+      });
+    })
+  );
+  return results.flat();
 }
 
 async function loadData(){
@@ -188,11 +195,6 @@ async function loadData(){
     if(!contactNamesByEngagement.has(ec.engagement_id)) contactNamesByEngagement.set(ec.engagement_id, []);
     contactNamesByEngagement.get(ec.engagement_id).push(name);
   }
-  // rep_name is already resolved server-side (pull-hubspot.mjs looks up
-  // HubSpot owner names) -- build the id->name map straight from the
-  // engagement rows themselves for the rep filter dropdown.
-  REP_NAMES = {};
-  for(const e of engagements) if(e.rep_id && e.rep_name) REP_NAMES[e.rep_id] = e.rep_name;
 
   const now = new Date();
   const d30cutoff = new Date(now - 30*86400000);
@@ -216,7 +218,6 @@ async function loadData(){
     for(const c of coContacts) personaCounts[c.persona_bucket || "unclassified"]++;
 
     const engagementCounts = {};
-    const repIds = new Set();
     for(const [type] of ENGAGEMENT_TYPES){
       // Outbound-only for calls/emails (measures our activity, not theirs);
       // meetings are inherently two-way so not direction-filtered.
@@ -227,7 +228,6 @@ async function loadData(){
         d7: rows.filter(e => new Date(e.occurred_at) >= d7cutoff).length,
       };
     }
-    for(const e of coEngagements) if(e.rep_id) repIds.add(e.rep_id);
 
     // Distinct contacts reached via outbound call/email in the window --
     // a count of people, not activities. Meetings excluded per the
@@ -275,7 +275,8 @@ async function loadData(){
       dealCounts: { prior: priorDeals.length, open: openDeals.length, openAmount },
       deals: coDeals.map(d => ({ name: d.name, pipeline: d.pipeline, stage: d.stage, amount: d.amount, isClosed: d.is_closed, closeDate: d.close_date })),
       recentEngagements,
-      repIds: Array.from(repIds),
+      ownerId: co.owner_id,
+      ownerName: co.owner_name,
     };
   });
 
@@ -297,7 +298,7 @@ function render(){
 
   let rows = ALL.filter(c => {
     if(q && !c.name.toLowerCase().includes(q)) return false;
-    if(rep && !(c.repIds||[]).includes(rep)) return false;
+    if(rep && c.ownerId !== rep) return false;
     return true;
   });
 
@@ -450,23 +451,27 @@ document.getElementById("repFilter").addEventListener("change", render);
 document.getElementById("sortBy").addEventListener("change", render);
 document.getElementById("signOutBtn").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
 
+// Rep filter = "accounts owned by this rep" (HubSpot Company Owner field),
+// not "reps who ever logged an activity against this account" -- the latter
+// pulled in departed reps, marketing sends, and system users, and let one
+// account match multiple unrelated filter values.
 function populateRepFilter(){
   const repSel = document.getElementById("repFilter");
-  const repIdsSeen = new Set();
-  ALL.forEach(c => (c.repIds||[]).forEach(r => repIdsSeen.add(r)));
-  const named = Array.from(repIdsSeen).filter(r => REP_NAMES[r]).sort((a,b) => REP_NAMES[a].localeCompare(REP_NAMES[b]));
-  const unnamed = Array.from(repIdsSeen).filter(r => !REP_NAMES[r]).sort((a,b) => Number(a) - Number(b));
-  named.forEach(r => {
+  const ownersSeen = new Map(); // ownerId -> ownerName
+  ALL.forEach(c => { if(c.ownerId) ownersSeen.set(c.ownerId, c.ownerName || c.ownerId); });
+  const named = Array.from(ownersSeen.entries()).filter(([,name]) => name && !/^\d+$/.test(name)).sort((a,b) => a[1].localeCompare(b[1]));
+  const unnamed = Array.from(ownersSeen.entries()).filter(([,name]) => !name || /^\d+$/.test(name)).sort((a,b) => Number(a[0]) - Number(b[0]));
+  named.forEach(([id, name]) => {
     const opt = document.createElement("option");
-    opt.value = r; opt.textContent = REP_NAMES[r];
+    opt.value = id; opt.textContent = name;
     repSel.appendChild(opt);
   });
   if(unnamed.length){
     const grp = document.createElement("optgroup");
     grp.label = "Unidentified (no HubSpot owner record)";
-    unnamed.forEach(r => {
+    unnamed.forEach(([id]) => {
       const opt = document.createElement("option");
-      opt.value = r; opt.textContent = r;
+      opt.value = id; opt.textContent = id;
       grp.appendChild(opt);
     });
     repSel.appendChild(grp);

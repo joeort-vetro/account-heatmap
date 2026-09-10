@@ -224,7 +224,7 @@ async function main() {
     do {
       const body = {
         filterGroups: [{ filters: [{ propertyName: "icp_target", operator: "EQ", value: "true" }] }],
-        properties: ["name", "lifecyclestage", "country"],
+        properties: ["name", "lifecyclestage", "country", "hubspot_owner_id"],
         limit: 100,
       };
       if (after) body.after = after;
@@ -269,6 +269,12 @@ async function main() {
       lifecycle_stage: c.properties.lifecyclestage ? (companyLifecycleLabels[c.properties.lifecyclestage] || c.properties.lifecyclestage) : null,
       country: c.properties.country || null,
       hubspot_url: `https://app.hubspot.com/contacts/8186371/record/0-2/${c.id}`,
+      // Company Owner -- the actual account owner, distinct from any rep
+      // who happens to appear on an engagement (calls/emails/meetings can
+      // be logged by SDRs, marketing sends, departed reps, etc.). The rep
+      // filter in the frontend uses this field, not engagement history.
+      owner_id: c.properties.hubspot_owner_id || null,
+      owner_name: c.properties.hubspot_owner_id ? (ownerNames[c.properties.hubspot_owner_id] || c.properties.hubspot_owner_id) : null,
       contact_count: (companyContacts[c.id] || []).length,
       last_refreshed: startedAt,
     }));
