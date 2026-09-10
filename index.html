@@ -1,0 +1,499 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VETRO Account Heatmap</title>
+<style>
+:root{
+  --bg:#f7f8fa; --panel:#fff; --border:#e1e4e8; --text:#1a2b3c; --muted:#64748b;
+  --red:#fde2e1; --red-fg:#9b2c2c; --yellow:#fff3cd; --yellow-fg:#8a6512; --green:#d9f2e6; --green-fg:#1a7a4c;
+  --accent:#1a9988; --accent2:#3d85c6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12181e; --panel:#1a222b; --border:#2a3441; --text:#e6edf3; --muted:#8b98a5;
+    --red:#3a1f1f; --red-fg:#f28b82; --yellow:#3a3018; --yellow-fg:#f5c964; --green:#173a2a; --green-fg:#6fd8a8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12181e; --panel:#1a222b; --border:#2a3441; --text:#e6edf3; --muted:#8b98a5;
+  --red:#3a1f1f; --red-fg:#f28b82; --yellow:#3a3018; --yellow-fg:#f5c964; --green:#173a2a; --green-fg:#6fd8a8;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:20px}
+h1{font-size:18px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12px;margin-bottom:14px}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+select,input[type=text]{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+th{background:var(--bg);position:sticky;top:0;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+td.company{text-align:left;font-weight:600;position:sticky;left:0;background:var(--panel);cursor:pointer}
+th.company{text-align:left;position:sticky;left:0;background:var(--bg);z-index:2}
+.grp{background:var(--accent);color:#fff;font-size:10px;letter-spacing:.05em}
+.cell{cursor:pointer;border-radius:5px;padding:3px 6px;display:inline-block;min-width:34px}
+.cell:hover{outline:2px solid var(--accent2)}
+.g{background:var(--green);color:var(--green-fg)}
+.y{background:var(--yellow);color:var(--yellow-fg)}
+.r{background:var(--red);color:var(--red-fg)}
+.n{color:var(--muted)}
+.sm{font-size:10px;color:var(--muted);display:block}
+.rowline{display:flex;align-items:center;justify-content:center;gap:5px;line-height:1.6}
+.taglabel{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;min-width:16px;text-align:right}
+.sect{border-left:2px solid var(--accent)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:10}
+.modal-bg.show{display:flex}
+.modal{background:var(--panel);border-radius:10px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:20px;border:1px solid var(--border)}
+.modal h2{margin:0 0 4px;font-size:15px}
+.modal .sub{margin-bottom:12px}
+.modal table{font-size:12px}
+.modal td,.modal th{text-align:left;padding:5px 8px}
+.close{float:right;cursor:pointer;color:var(--muted);font-size:20px;line-height:1}
+.empty{color:var(--muted);padding:30px;text-align:center}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.swatch{width:10px;height:10px;border-radius:2px;display:inline-block}
+.gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px}
+.gate button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;cursor:pointer}
+.gate .err{color:var(--red-fg);font-size:13px;max-width:400px;text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <h1>VETRO Account Heatmap</h1>
+  <p class="sub">Sign in with your @vetrofibermap.com Google account to continue.</p>
+  <button id="signInBtn">Sign in with Google</button>
+  <div class="err" id="gateErr" hidden></div>
+</div>
+
+<div id="app" hidden>
+  <h1>VETRO Account Heatmap</h1>
+  <div class="sub" id="asof">Loading...</div>
+  <div class="legend">
+    <span><i class="swatch g"></i>Strong coverage</span>
+    <span><i class="swatch y"></i>Partial</span>
+    <span><i class="swatch r"></i>Gap</span>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search account...">
+    <select id="repFilter"><option value="">All reps</option></select>
+    <select id="sortBy">
+      <option value="name">Sort: Name</option>
+      <option value="openAmount">Sort: Open Pipeline $</option>
+      <option value="contactCount">Sort: Contact Count</option>
+      <option value="activity30">Sort: Activity (30d)</option>
+    </select>
+    <button id="signOutBtn" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer">Sign out</button>
+  </div>
+  <div class="tablewrap"><table id="grid"><thead></thead><tbody><tr><td class="empty">Loading data...</td></tr></tbody></table></div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <span class="close" id="modalClose">&times;</span>
+    <h2 id="modalTitle"></h2>
+    <div class="sub" id="modalSub"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// Live Supabase-backed rebuild of the original Claude Artifact POC
+// (f372d68f-751b-4e3f-8e0c-4a5ddcf6b492). Column set, thresholds, and
+// drill-down behavior are carried over verbatim from that POC's source --
+// see context/vetro-build-account-heatmap.md in the Chief of Staff repo
+// for the full build history. Data is now pulled daily by a GitHub Actions
+// job (pull-hubspot.mjs in this repo) into Supabase, and this page reads it
+// live and computes aggregates client-side so the grid and the drill-down
+// are always derived from the exact same row set.
+
+const SUPABASE_URL = "https://koigqgfrmhitdmobtvpi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvaWdxZ2ZybWhpdGRtb2J0dnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5OTg4MjcsImV4cCI6MjEwNDU3NDgyN30.wUyqkGw1E_oJveEl-ekSM2QGB2JUYEn_a2WJ8TuSbYo";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const PERSONA_COLS = [
+  ["opsTech","Ops/Tech"],["salesBdMktg","Sales/BD/Mktg"],["executives","Executives"],
+  ["networkArchitect","Net Arch"],["goToMarket","Go-to-Mkt"],["engineer","Engineer"],["unclassified","Unclassified"]
+];
+const PERSONA_LABEL_FULL = {
+  opsTech: "Ops/Tech", salesBdMktg: "Sales/BD/Mktg", executives: "Executives",
+  networkArchitect: "Network Architect", goToMarket: "Go-to-Market", engineer: "Engineer", unclassified: "Unclassified"
+};
+const ENGAGEMENT_TYPES = [["calls","Calls"],["emails","Emails"],["meetings","Meetings"]];
+
+let ALL = [];
+
+function tier(n, yellowAt, greenAt){
+  if(n >= greenAt) return "g";
+  if(n >= yellowAt) return "y";
+  return "r";
+}
+function cell(val, cls, onclick){
+  return `<span class="cell ${cls}" data-action="${onclick}">${val}</span>`;
+}
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtMoney(n){ return "$" + Math.round(n||0).toLocaleString(); }
+function fmtDate(s){ if(!s) return ""; try{ return new Date(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});}catch(e){return s;} }
+
+// PostgREST caps a single request at 1000 rows -- page through with .range().
+async function fetchAll(table, columns){
+  const pageSize = 1000;
+  let from = 0;
+  let out = [];
+  while(true){
+    const { data, error } = await sb.from(table).select(columns).range(from, from + pageSize - 1);
+    if(error) throw new Error(`${table}: ${error.message}`);
+    out = out.concat(data);
+    if(data.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+}
+
+async function loadData(){
+  const [companies, contacts, deals, engagements, engagementContacts, metaRows] = await Promise.all([
+    fetchAll("companies", "*"),
+    fetchAll("contacts", "*"),
+    fetchAll("deals", "*"),
+    fetchAll("engagements", "*"),
+    fetchAll("engagement_contacts", "engagement_id,contact_id"),
+    sb.from("meta").select("*").eq("key", "last_refresh"),
+  ]);
+
+  const contactsById = new Map(contacts.map(c => [c.id, c]));
+  const contactsByCompany = new Map();
+  for(const c of contacts){
+    if(!contactsByCompany.has(c.company_id)) contactsByCompany.set(c.company_id, []);
+    contactsByCompany.get(c.company_id).push(c);
+  }
+  const dealsByCompany = new Map();
+  for(const d of deals){
+    if(!dealsByCompany.has(d.company_id)) dealsByCompany.set(d.company_id, []);
+    dealsByCompany.get(d.company_id).push(d);
+  }
+  const engagementsByCompany = new Map();
+  for(const e of engagements){
+    if(!engagementsByCompany.has(e.company_id)) engagementsByCompany.set(e.company_id, []);
+    engagementsByCompany.get(e.company_id).push(e);
+  }
+  const contactNamesByEngagement = new Map();
+  for(const ec of engagementContacts){
+    const name = contactsById.get(ec.contact_id)?.name || ec.contact_id;
+    if(!contactNamesByEngagement.has(ec.engagement_id)) contactNamesByEngagement.set(ec.engagement_id, []);
+    contactNamesByEngagement.get(ec.engagement_id).push(name);
+  }
+
+  const now = new Date();
+  const d30cutoff = new Date(now - 30*86400000);
+  const d7cutoff = new Date(now - 7*86400000);
+
+  // Indexed by engagement id once, up front -- reused by every company
+  // below instead of rescanning the full ~25k-row engagement_contacts
+  // array per company.
+  const ecByEngagement = new Map();
+  for(const ec of engagementContacts) {
+    if(!ecByEngagement.has(ec.engagement_id)) ecByEngagement.set(ec.engagement_id, []);
+    ecByEngagement.get(ec.engagement_id).push(ec.contact_id);
+  }
+
+  ALL = companies.map(co => {
+    const coContacts = contactsByCompany.get(co.id) || [];
+    const coDeals = dealsByCompany.get(co.id) || [];
+    const coEngagements = engagementsByCompany.get(co.id) || [];
+
+    const personaCounts = { opsTech:0, salesBdMktg:0, executives:0, networkArchitect:0, goToMarket:0, engineer:0, unclassified:0 };
+    for(const c of coContacts) personaCounts[c.persona_bucket || "unclassified"]++;
+
+    const engagementCounts = {};
+    const repIds = new Set();
+    for(const [type] of ENGAGEMENT_TYPES){
+      // Outbound-only for calls/emails (measures our activity, not theirs);
+      // meetings are inherently two-way so not direction-filtered.
+      const rows = coEngagements.filter(e => e.type === type && (type === "meetings" || e.direction === "outbound"));
+      engagementCounts[type] = {
+        total: rows.length,
+        d30: rows.filter(e => new Date(e.occurred_at) >= d30cutoff).length,
+        d7: rows.filter(e => new Date(e.occurred_at) >= d7cutoff).length,
+      };
+    }
+    for(const e of coEngagements) if(e.rep_id) repIds.add(e.rep_id);
+
+    // Distinct contacts reached via outbound call/email in the window --
+    // a count of people, not activities. Meetings excluded per the
+    // original artifact's definition.
+    function distinctContactedFast(cutoff){
+      const ids = new Set();
+      for(const e of coEngagements){
+        if((e.type !== "calls" && e.type !== "emails") || e.direction !== "outbound") continue;
+        if(new Date(e.occurred_at) < cutoff) continue;
+        for(const cid of (ecByEngagement.get(e.id) || [])) ids.add(cid);
+      }
+      return ids.size;
+    }
+
+    const priorDeals = coDeals.filter(d => d.is_closed);
+    const openDeals = coDeals.filter(d => !d.is_closed);
+    const openAmount = openDeals.reduce((s,d) => s + (Number(d.amount)||0), 0);
+
+    const recentEngagements = coEngagements
+      .slice()
+      .sort((a,b) => new Date(b.occurred_at) - new Date(a.occurred_at))
+      .map(e => ({
+        type: e.type,
+        date: e.occurred_at,
+        rep: e.rep_name || e.rep_id || "",
+        contacts: contactNamesByEngagement.get(e.id) || [],
+        detail: e.detail || "",
+        direction: e.direction,
+      }));
+
+    return {
+      id: co.id,
+      name: co.name,
+      lifecycleStage: co.lifecycle_stage,
+      hubspotUrl: co.hubspot_url,
+      contactCount: coContacts.length,
+      personaCounts,
+      contacts: coContacts.map(c => ({
+        id: c.id, name: c.name, title: c.title, email: c.email,
+        lifecycleStage: c.lifecycle_stage, persona: PERSONA_LABEL_FULL[c.persona_bucket] || "Unclassified",
+        personaBucket: c.persona_bucket || "unclassified", lastActivity: c.last_activity,
+      })),
+      engagementCounts,
+      distinctContacted: { d30: distinctContactedFast(d30cutoff), d7: distinctContactedFast(d7cutoff) },
+      dealCounts: { prior: priorDeals.length, open: openDeals.length, openAmount },
+      deals: coDeals.map(d => ({ name: d.name, pipeline: d.pipeline, stage: d.stage, amount: d.amount, isClosed: d.is_closed, closeDate: d.close_date })),
+      recentEngagements,
+      repIds: Array.from(repIds),
+    };
+  });
+
+  const meta = (metaRows.data || []).find(r => r.key === "last_refresh");
+  const asof = document.getElementById("asof");
+  if(meta && meta.payload && meta.payload.status === "ok"){
+    asof.textContent = "Data as of " + new Date(meta.payload.timestamp).toLocaleString() + " (refreshed daily)";
+  } else if(meta && meta.payload){
+    asof.textContent = "Last refresh status: " + meta.payload.status + " (" + new Date(meta.payload.timestamp).toLocaleString() + ")";
+  } else {
+    asof.textContent = "No refresh data yet.";
+  }
+}
+
+function render(){
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const rep = document.getElementById("repFilter").value;
+  const sortBy = document.getElementById("sortBy").value;
+
+  let rows = ALL.filter(c => {
+    if(q && !c.name.toLowerCase().includes(q)) return false;
+    if(rep && !(c.repIds||[]).includes(rep)) return false;
+    return true;
+  });
+
+  rows.sort((a,b) => {
+    if(sortBy === "name") return a.name.localeCompare(b.name);
+    if(sortBy === "openAmount") return (b.dealCounts?.openAmount||0) - (a.dealCounts?.openAmount||0);
+    if(sortBy === "contactCount") return (b.contactCount||0) - (a.contactCount||0);
+    if(sortBy === "activity30"){
+      const av = ENGAGEMENT_TYPES.reduce((s,[k])=>s+(a.engagementCounts?.[k]?.d30||0),0);
+      const bv = ENGAGEMENT_TYPES.reduce((s,[k])=>s+(b.engagementCounts?.[k]?.d30||0),0);
+      return bv - av;
+    }
+    return 0;
+  });
+
+  const thead = document.querySelector("#grid thead");
+  thead.innerHTML = `
+    <tr>
+      <th class="grp" rowspan="2">Account</th>
+      <th class="grp" rowspan="2">Lifecycle Stage</th>
+      <th class="grp sect" colspan="${PERSONA_COLS.length+1}">Data Quality &mdash; Can we get in?</th>
+      <th class="grp sect" colspan="${ENGAGEMENT_TYPES.length}">Recent Activity (outbound only) &mdash; How much?</th>
+      <th class="grp sect" colspan="5">How Wide &amp; Pipeline</th>
+    </tr>
+    <tr>
+      <th class="sect">Contacts</th>
+      ${PERSONA_COLS.map(([,l])=>`<th>${l}</th>`).join("")}
+      ${ENGAGEMENT_TYPES.map(([,l],i)=>`<th class="${i===0?'sect':''}">${l}<span class="sm">30d / 7d (12mo)</span></th>`).join("")}
+      <th class="sect">Contacted<span class="sm">30d</span></th>
+      <th>Contacted<span class="sm">7d</span></th>
+      <th>Prior Deals</th>
+      <th>Open Deals</th>
+      <th>Open $</th>
+    </tr>`;
+
+  const tbody = document.querySelector("#grid tbody");
+  if(rows.length === 0){
+    tbody.innerHTML = `<tr><td class="empty" colspan="20">No accounts match.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(c => {
+    const pc = c.personaCounts, ec = c.engagementCounts, distinct = c.distinctContacted, dc = c.dealCounts;
+    return `<tr>
+      <td class="company" data-co="${c.id}">${esc(c.name)}</td>
+      <td>${esc(c.lifecycleStage || "")}</td>
+      <td class="sect">${cell(c.contactCount||0, tier(c.contactCount||0,3,8), `contacts|${c.id}`)}</td>
+      ${PERSONA_COLS.map(([k]) => {
+        const cls = k === "unclassified" ? (pc[k]>=8 ? "r" : pc[k]>=3 ? "y" : "g") : tier(pc[k]||0,1,2);
+        return `<td>${cell(pc[k]||0, cls, `persona|${c.id}|${k}`)}</td>`;
+      }).join("")}
+      ${ENGAGEMENT_TYPES.map(([k], i) => {
+        const e = ec[k] || {total:0,d30:0,d7:0};
+        return `<td class="${i===0?'sect':''}">`
+          + `<span class="rowline">${cell(e.d30, tier(e.d30,1,3), `engagement|${c.id}|${k}|d30`)}<span class="taglabel">30d</span></span>`
+          + `<span class="rowline">${cell(e.d7, tier(e.d7,1,2), `engagement|${c.id}|${k}|d7`)}<span class="taglabel">7d</span></span>`
+          + `<span class="sm">${cell(e.total, "n", `engagement|${c.id}|${k}|all`)} 12mo</span>`
+          + `</td>`;
+      }).join("")}
+      <td class="sect">${cell(distinct.d30||0, tier(distinct.d30||0,1,3), `distinct|${c.id}|d30`)}</td>
+      <td>${cell(distinct.d7||0, tier(distinct.d7||0,1,2), `distinct|${c.id}|d7`)}</td>
+      <td>${cell(dc.prior||0, "n", `deals|${c.id}|closed`)}</td>
+      <td>${cell(dc.open||0, tier(dc.open||0,1,2), `deals|${c.id}|open`)}</td>
+      <td>${cell(fmtMoney(dc.openAmount), tier(dc.openAmount||0,10000,50000), `deals|${c.id}|open`)}</td>
+    </tr>`;
+  }).join("");
+}
+
+function openModal(title, sub, bodyHtml){
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalSub").textContent = sub;
+  document.getElementById("modalBody").innerHTML = bodyHtml;
+  document.getElementById("modalBg").classList.add("show");
+}
+function closeModal(){ document.getElementById("modalBg").classList.remove("show"); }
+
+function contactsTable(list, filterFn){
+  const items = (filterFn ? list.filter(filterFn) : list);
+  if(items.length === 0) return `<div class="empty">No contacts found.</div>`;
+  return `<table><tr><th>Name</th><th>Title</th><th>Email</th><th>Lifecycle Stage</th><th>Persona</th><th>Last Activity</th></tr>${
+    items.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.title)}</td><td>${esc(c.email)}</td><td>${esc(c.lifecycleStage)}</td><td>${esc(c.persona)}</td><td>${fmtDate(c.lastActivity)}</td></tr>`).join("")
+  }</table>`;
+}
+function engagementsTable(list){
+  if(list.length === 0) return `<div class="empty">No activity found.</div>`;
+  return `<table><tr><th>Date</th><th>Type</th><th>Rep</th><th>Contact(s)</th><th>Detail</th></tr>${
+    list.map(e => `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.type)}</td><td>${esc(e.rep)}</td><td>${esc((e.contacts||[]).join(", "))}</td><td>${esc(e.detail)}</td></tr>`).join("")
+  }</table>`;
+}
+function dealsTable(list){
+  if(list.length === 0) return `<div class="empty">No deals found.</div>`;
+  return `<table><tr><th>Deal</th><th>Pipeline</th><th>Stage</th><th>Amount</th><th>Close Date</th></tr>${
+    list.map(d => `<tr><td>${esc(d.name)}</td><td>${esc(d.pipeline)}</td><td>${esc(d.stage)}</td><td>${fmtMoney(d.amount)}</td><td>${fmtDate(d.closeDate)}</td></tr>`).join("")
+  }</table>`;
+}
+
+function handleCellClick(action){
+  const [kind, coId, ...rest] = action.split("|");
+  const c = ALL.find(x => x.id === coId);
+  if(!c) return;
+  if(kind === "contacts"){
+    openModal(c.name, "All contacts", contactsTable(c.contacts));
+  } else if(kind === "persona"){
+    const key = rest[0];
+    openModal(c.name, (PERSONA_COLS.find(p=>p[0]===key)?.[1] || key) + " contacts", contactsTable(c.contacts, ct => ct.personaBucket === key));
+  } else if(kind === "engagement"){
+    const type = rest[0];
+    const window_ = rest[1] || "all";
+    const typeLabel = ENGAGEMENT_TYPES.find(t=>t[0]===type)?.[1] || type;
+    const now = new Date();
+    const cutoff = window_ === "d30" ? 30 : window_ === "d7" ? 7 : null;
+    const list = (c.recentEngagements||[]).filter(e => {
+      if(e.type !== type) return false;
+      if(type !== "meetings" && e.direction !== "outbound") return false;
+      if(cutoff == null) return true;
+      return (now - new Date(e.date)) / 86400000 <= cutoff;
+    });
+    const windowLabel = cutoff ? `last ${cutoff}d` : "last 12 months (lookback scope, not true all-time)";
+    openModal(c.name, `${typeLabel} — ${windowLabel}`, engagementsTable(list));
+  } else if(kind === "distinct"){
+    const window_ = rest[0];
+    const cutoff = window_ === "d7" ? 7 : 30;
+    const now = new Date();
+    const list = (c.recentEngagements||[]).filter(e => {
+      if(!(e.type === "calls" || e.type === "emails") || e.direction !== "outbound") return false;
+      const d = new Date(e.date);
+      return (now - d) / 86400000 <= cutoff;
+    });
+    openModal(c.name, `Outbound calls/emails in last ${cutoff}d`, engagementsTable(list));
+  } else if(kind === "deals"){
+    const which = rest[0];
+    const list = (c.deals||[]).filter(d => which === "open" ? !d.isClosed : d.isClosed);
+    openModal(c.name, which === "open" ? "Open deals" : "Prior (closed) deals", dealsTable(list));
+  }
+}
+
+document.getElementById("grid").addEventListener("click", e => {
+  const t = e.target.closest("[data-action]");
+  if(t){ handleCellClick(t.dataset.action); return; }
+  const co = e.target.closest("[data-co]");
+  if(co){
+    const c = ALL.find(x => x.id === co.dataset.co);
+    if(c) window.open(c.hubspotUrl, "_blank");
+  }
+});
+document.getElementById("modalClose").addEventListener("click", closeModal);
+document.getElementById("modalBg").addEventListener("click", e => { if(e.target.id === "modalBg") closeModal(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); });
+document.getElementById("search").addEventListener("input", render);
+document.getElementById("repFilter").addEventListener("change", render);
+document.getElementById("sortBy").addEventListener("change", render);
+document.getElementById("signOutBtn").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
+
+function populateRepFilter(){
+  const repSel = document.getElementById("repFilter");
+  const repIdsSeen = new Set();
+  ALL.forEach(c => (c.repIds||[]).forEach(r => repIdsSeen.add(r)));
+  const repNames = {};
+  for(const c of ALL) for(const e of (c.recentEngagements||[])) if(e.rep) repNames[e.rep] = e.rep;
+  // rep ids are already resolved to names server-side (rep_name), so the
+  // "id" stored in repIds is really the HubSpot owner id used only for
+  // filtering -- display uses whatever name is attached to that id's
+  // engagements.
+  Array.from(repIdsSeen).sort().forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r; opt.textContent = r;
+    repSel.appendChild(opt);
+  });
+}
+
+let booted = false;
+
+document.getElementById("signInBtn").addEventListener("click", async () => {
+  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
+  if(error){
+    const el = document.getElementById("gateErr");
+    el.hidden = false;
+    el.textContent = error.message;
+  }
+});
+
+async function boot(session){
+  if(!session){
+    document.getElementById("gate").hidden = false;
+    document.getElementById("app").hidden = true;
+    return;
+  }
+  if(booted) return; // avoid re-fetching on token-refresh auth events once loaded
+  booted = true;
+
+  document.getElementById("gate").hidden = true;
+  document.getElementById("app").hidden = false;
+
+  try{
+    await loadData();
+    populateRepFilter();
+    render();
+  } catch(err){
+    document.querySelector("#grid tbody").innerHTML = `<tr><td class="empty" colspan="20">Error loading data: ${esc(err.message||String(err))}</td></tr>`;
+  }
+}
+
+sb.auth.onAuthStateChange((_event, session) => { boot(session); });
+</script>
+</body>
+</html>
