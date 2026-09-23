@@ -1,0 +1,890 @@
+<!doctype html>
+<title>VETRO Pipeline Matrix</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f4f7f6;
+    --surface: #ffffff;
+    --surface-alt: #eaf1ef;
+    --border: #d6e0dd;
+    --ink: #16222b;
+    --ink-secondary: #55636a;
+    --ink-faint: #8b979a;
+    --accent: #157a6d;
+    --accent-strong: #0f5c52;
+    --accent-tint: #d7ece8;
+    --accent-2: #2f6fa8;
+    --warning: #c74a1a;
+    --warning-tint: #fbe6da;
+    --seq-0: #eef3f2;
+    --seq-1: #cbe3de;
+    --seq-2: #9fcdc4;
+    --seq-3: #6bb2a5;
+    --seq-4: #368f80;
+    --seq-5: #146357;
+    --shadow: 0 1px 2px rgba(15, 40, 35, 0.06), 0 8px 24px rgba(15, 40, 35, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1714;
+      --surface: #131f1c;
+      --surface-alt: #182823;
+      --border: #23362f;
+      --ink: #e9f2ef;
+      --ink-secondary: #a6b8b2;
+      --ink-faint: #718780;
+      --accent: #33c2ab;
+      --accent-strong: #4fe0c6;
+      --accent-tint: #1c3833;
+      --accent-2: #6fa9dd;
+      --warning: #ff8a52;
+      --warning-tint: #3a2418;
+      --seq-0: #182823;
+      --seq-1: #1c352f;
+      --seq-2: #204a40;
+      --seq-3: #256355;
+      --seq-4: #2b8571;
+      --seq-5: #33c2ab;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0e1714;
+    --surface: #131f1c;
+    --surface-alt: #182823;
+    --border: #23362f;
+    --ink: #e9f2ef;
+    --ink-secondary: #a6b8b2;
+    --ink-faint: #718780;
+    --accent: #33c2ab;
+    --accent-strong: #4fe0c6;
+    --accent-tint: #1c3833;
+    --accent-2: #6fa9dd;
+    --warning: #ff8a52;
+    --warning-tint: #3a2418;
+    --seq-0: #182823;
+    --seq-1: #1c352f;
+    --seq-2: #204a40;
+    --seq-3: #256355;
+    --seq-4: #2b8571;
+    --seq-5: #33c2ab;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    padding: 32px clamp(16px, 4vw, 48px) 64px;
+    margin: 0;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* Sign-in gate */
+  .gate {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 70vh; gap: 16px; text-align: center;
+  }
+  .gate h1 { font-family: 'Fraunces', Georgia, serif; font-size: 26px; margin: 0; }
+  .gate p { color: var(--ink-secondary); font-size: 14px; margin: 0; }
+  .gate button {
+    background: var(--accent); color: #fff; border: none; border-radius: 9px;
+    padding: 11px 22px; font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+  .gate button:hover { background: var(--accent-strong); }
+  .gate .err { color: var(--warning); font-size: 13px; max-width: 420px; }
+  [hidden] { display: none !important; }
+
+  header.page {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+
+  .subtitle {
+    color: var(--ink-secondary);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .refresh-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .refresh-badge .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  .refresh-badge.stale .dot,
+  .refresh-badge.failed .dot { background: var(--warning); }
+  .refresh-badge.stale,
+  .refresh-badge.failed { color: var(--warning); border-color: var(--warning); background: var(--warning-tint); }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .control-group {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .control-group button {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+
+  .control-group button:hover { color: var(--ink); }
+  .control-group button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  select.quarter-select, select.owner-select {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 34px 9px 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2355636a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+  }
+
+  .sign-out {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--ink-secondary);
+    cursor: pointer;
+  }
+  .sign-out:hover { color: var(--ink); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table.matrix {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 760px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  table.matrix th, table.matrix td {
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 0;
+  }
+
+  table.matrix th:last-child, table.matrix td:last-child { border-right: none; }
+  table.matrix tr:last-child td { border-bottom: none; }
+
+  th.col-head {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 12px 10px;
+    text-align: center;
+    background: var(--surface-alt);
+  }
+
+  th.corner {
+    background: var(--surface-alt);
+    width: 132px;
+  }
+
+  th.row-head {
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 14px;
+    background: var(--surface-alt);
+    white-space: nowrap;
+  }
+
+  td.cell {
+    cursor: default;
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px 8px;
+    min-width: 108px;
+    transition: outline 0.1s ease;
+  }
+
+  td.cell.has-value { cursor: pointer; }
+  td.cell.has-value:hover { outline: 2px solid var(--accent-strong); outline-offset: -2px; }
+  td.cell.has-value:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
+
+  .cell-amount {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  .cell-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-secondary);
+  }
+
+  td.cell.empty .cell-amount, td.cell.empty .cell-count { color: var(--ink-faint); }
+
+  tr.totals-row td, tr.totals-row th {
+    background: var(--surface-alt);
+    font-weight: 600;
+    border-top: 2px solid var(--border);
+  }
+
+  td.grand-total {
+    background: var(--accent-tint) !important;
+    color: var(--accent-strong);
+  }
+  td.grand-total .cell-count { color: var(--accent-strong); opacity: 0.75; }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--ink-secondary);
+    flex-wrap: wrap;
+  }
+
+  .legend .ramp { display: flex; gap: 2px; }
+  .legend .ramp span { width: 16px; height: 10px; border-radius: 2px; }
+
+  .note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 18px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warning);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+  }
+
+  .note strong { color: var(--ink); }
+
+  .empty-state {
+    padding: 64px 24px;
+    text-align: center;
+    color: var(--ink-secondary);
+  }
+
+  .empty-state .glyph {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+
+  .empty-state h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 8px;
+  }
+
+  /* Drill-down modal */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 20, 18, 0.45);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 6vh 16px;
+    z-index: 50;
+  }
+  .overlay[hidden] { display: none; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 640px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-head {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .modal-head h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .modal-head .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-secondary);
+  }
+
+  .modal-close {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 30px; height: 30px;
+    font-size: 16px;
+    color: var(--ink-secondary);
+    cursor: pointer;
+    flex: none;
+  }
+  .modal-close:hover { color: var(--ink); }
+
+  .modal-body { overflow-y: auto; padding: 6px 0; }
+
+  .deal-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 11px 22px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .deal-row:last-child { border-bottom: none; }
+
+  .deal-name { font-weight: 500; }
+  .deal-owner { color: var(--ink-secondary); font-size: 12px; }
+  .deal-amount { font-family: 'IBM Plex Mono', monospace; font-weight: 600; text-align: right; }
+  .deal-age {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-secondary);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .deal-age.old { color: var(--warning); font-weight: 600; }
+
+  .modal-foot {
+    padding: 12px 22px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-alt);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-secondary);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="gate" id="gate">
+  <h1>VETRO Pipeline Matrix</h1>
+  <p>Sign in with your @vetrofibermap.com Google account to continue.</p>
+  <button id="signInBtn">Sign in with Google</button>
+  <div class="err" id="gateErr" hidden></div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="page">
+    <div>
+      <h1>VETRO Pipeline Matrix</h1>
+      <p class="subtitle">Open deals by stage and age &middot; HubSpot-sourced, refreshed nightly</p>
+    </div>
+    <div id="refreshBadge" class="refresh-badge"><span class="dot"></span><span id="refreshText">Loading&hellip;</span></div>
+  </header>
+
+  <div class="controls">
+    <div class="control-group" id="pipelineControl" role="group" aria-label="Pipeline">
+      <button data-pipeline="combined" class="active">Combined</button>
+      <button data-pipeline="new_business">New Business</button>
+      <button data-pipeline="expansion">Expansion</button>
+    </div>
+    <select id="quarterSelect" class="quarter-select" aria-label="Quarter"></select>
+    <select id="ownerSelect" class="owner-select" aria-label="Owner"></select>
+    <button class="sign-out" id="signOutBtn">Sign out</button>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table class="matrix" id="matrixTable" aria-live="polite"></table>
+    </div>
+    <div class="legend">
+      <span>Cell shade = deal $ concentration</span>
+      <span class="ramp">
+        <span style="background:var(--seq-0)"></span>
+        <span style="background:var(--seq-1)"></span>
+        <span style="background:var(--seq-2)"></span>
+        <span style="background:var(--seq-3)"></span>
+        <span style="background:var(--seq-4)"></span>
+        <span style="background:var(--seq-5)"></span>
+      </span>
+      <span>low &rarr; high</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <span>&#9888;&#65039;</span>
+    <span><strong>Reps don't consistently update deal stage.</strong> A heavy 226+ column, especially in Discovery, reflects known stage-hygiene gaps &mdash; not a data error. Treat it as a coaching signal, not a bug report.</span>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalTitle">Deals</h2>
+        <div class="meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Live Supabase-backed rebuild of the original Claude Artifact POC
+  // (3fce257e-3e7e-4c2c-aaf5-e778d2af83f5, tools/vetro-pipeline-matrix.html
+  // in the Chief of Staff repo). Grid layout, drill-down, and stage/age
+  // bucket definitions are carried over verbatim from that POC -- see
+  // context/vetro-build-deal-stage-age-matrix.md for the full build history.
+  // Data is pulled nightly by pull-hubspot-matrix.mjs (this repo) into the
+  // matrix_deals/matrix_meta tables of the same Supabase project the account
+  // heatmap uses, and this page reads it live, gated behind the same
+  // @vetrofibermap.com Google sign-in as index.html.
+
+  var SUPABASE_URL = "https://koigqgfrmhitdmobtvpi.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvaWdxZ2ZybWhpdGRtb2J0dnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5OTg4MjcsImV4cCI6MjEwNDU3NDgyN30.wUyqkGw1E_oJveEl-ekSM2QGB2JUYEn_a2WJ8TuSbYo";
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var STAGES = ['Discovery', 'Demo', 'Evaluation', 'Scoping', 'Negotiation', 'RevOps Review'];
+  var BUCKETS = ['0-45', '46-90', '91-135', '136-180', '181-225', '226+'];
+  var SEQ_STEPS = ['var(--seq-0)', 'var(--seq-1)', 'var(--seq-2)', 'var(--seq-3)', 'var(--seq-4)', 'var(--seq-5)'];
+
+  var state = {
+    deals: [],
+    lastRefresh: null,
+    pipeline: 'combined',
+    quarter: null,
+    owner: ''
+  };
+
+  var fmtMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var fmtMoneyShort = function (n) {
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + 'M';
+    if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+    return '$' + Math.round(n);
+  };
+
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'html') e.innerHTML = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    (children || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+  function text(tag, cls, str) { return el(tag, { class: cls }, [document.createTextNode(str)]); }
+
+  // Maps a Supabase row (snake_case) into the camelCase shape the rendering
+  // logic below expects (carried over from the original artifact build).
+  function rowToDeal(r) {
+    return {
+      id: r.hubspot_deal_id,
+      dealName: r.deal_name,
+      pipeline: r.pipeline,
+      stageLabel: r.stage_label,
+      ageBucket: r.age_bucket,
+      ageDays: r.age_days,
+      amount: Number(r.amount) || 0,
+      closeQuarter: r.close_quarter,
+      ownerName: r.owner_name || 'Unassigned'
+    };
+  }
+
+  function filteredDeals() {
+    return state.deals.filter(function (d) {
+      if (state.pipeline !== 'combined' && d.pipeline !== state.pipeline) return false;
+      if (state.quarter && d.closeQuarter !== state.quarter) return false;
+      if (state.owner && d.ownerName !== state.owner) return false;
+      return true;
+    });
+  }
+
+  function aggregate(deals) {
+    var cells = {};
+    STAGES.forEach(function (s) {
+      cells[s] = {};
+      BUCKETS.forEach(function (b) { cells[s][b] = { amount: 0, count: 0, deals: [] }; });
+    });
+    var rowTotals = {}, colTotals = {}, grand = { amount: 0, count: 0 };
+    STAGES.forEach(function (s) { rowTotals[s] = { amount: 0, count: 0 }; });
+    BUCKETS.forEach(function (b) { colTotals[b] = { amount: 0, count: 0 }; });
+
+    deals.forEach(function (d) {
+      if (!cells[d.stageLabel] || !cells[d.stageLabel][d.ageBucket]) return;
+      var c = cells[d.stageLabel][d.ageBucket];
+      c.amount += d.amount; c.count += 1; c.deals.push(d);
+      rowTotals[d.stageLabel].amount += d.amount; rowTotals[d.stageLabel].count += 1;
+      colTotals[d.ageBucket].amount += d.amount; colTotals[d.ageBucket].count += 1;
+      grand.amount += d.amount; grand.count += 1;
+    });
+    return { cells: cells, rowTotals: rowTotals, colTotals: colTotals, grand: grand };
+  }
+
+  function shadeStep(amount, max) {
+    if (!amount || !max) return 0;
+    var ratio = amount / max;
+    return Math.max(1, Math.min(5, Math.ceil(ratio * 5)));
+  }
+
+  function renderFilterOptions() {
+    var quarters = Array.from(new Set(state.deals.map(function (d) { return d.closeQuarter; }).filter(Boolean))).sort();
+    var qSel = document.getElementById('quarterSelect');
+    qSel.innerHTML = '';
+    qSel.appendChild(el('option', { value: '' }, [document.createTextNode('All quarters')]));
+    quarters.forEach(function (q) {
+      qSel.appendChild(el('option', { value: q }, [document.createTextNode(q)]));
+    });
+    if (state.quarter === null && quarters.length) {
+      var now = new Date();
+      var thisQ = now.getFullYear() + '-Q' + (Math.floor(now.getMonth() / 3) + 1);
+      state.quarter = quarters.indexOf(thisQ) !== -1 ? thisQ : '';
+    }
+    qSel.value = state.quarter || '';
+
+    var owners = Array.from(new Set(state.deals.map(function (d) { return d.ownerName; }).filter(Boolean))).sort();
+    var oSel = document.getElementById('ownerSelect');
+    var prevOwner = oSel.value;
+    oSel.innerHTML = '';
+    oSel.appendChild(el('option', { value: '' }, [document.createTextNode('All owners')]));
+    owners.forEach(function (o) {
+      oSel.appendChild(el('option', { value: o }, [document.createTextNode(o)]));
+    });
+    oSel.value = owners.indexOf(prevOwner) !== -1 ? prevOwner : '';
+    state.owner = oSel.value;
+  }
+
+  function renderMatrix() {
+    var deals = filteredDeals();
+    var agg = aggregate(deals);
+    var maxCell = 0;
+    STAGES.forEach(function (s) { BUCKETS.forEach(function (b) { maxCell = Math.max(maxCell, agg.cells[s][b].amount); }); });
+
+    var table = document.getElementById('matrixTable');
+    table.innerHTML = '';
+    table.style.display = '';
+    var wrap = document.querySelector('.table-scroll');
+    var existingEmpty = wrap.querySelector('.empty-state');
+    if (existingEmpty) existingEmpty.remove();
+
+    if (!state.deals.length) {
+      renderEmptyState();
+      return;
+    }
+
+    var thead = el('thead');
+    var headRow = el('tr');
+    headRow.appendChild(el('th', { class: 'corner' }));
+    BUCKETS.forEach(function (b) { headRow.appendChild(el('th', { class: 'col-head' }, [document.createTextNode(b + ' days')])); });
+    headRow.appendChild(el('th', { class: 'col-head' }, [document.createTextNode('Total')]));
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = el('tbody');
+    STAGES.forEach(function (stage) {
+      var row = el('tr');
+      row.appendChild(el('th', { class: 'row-head' }, [document.createTextNode(stage)]));
+      BUCKETS.forEach(function (bucket) {
+        var c = agg.cells[stage][bucket];
+        var hasValue = c.count > 0;
+        var step = shadeStep(c.amount, maxCell);
+        var td = el('td', {
+          class: 'cell' + (hasValue ? ' has-value' : ' empty'),
+          style: hasValue ? 'background:' + SEQ_STEPS[step] : '',
+          tabindex: hasValue ? '0' : '-1',
+          role: hasValue ? 'button' : undefined,
+          'aria-label': hasValue ? (stage + ', ' + bucket + ' days, ' + fmtMoney.format(c.amount) + ', ' + c.count + ' deal' + (c.count === 1 ? '' : 's')) : undefined
+        }, [
+          text('div', 'cell-amount', hasValue ? fmtMoneyShort(c.amount) : '$0'),
+          text('div', 'cell-count', hasValue ? (c.count + (c.count === 1 ? ' deal' : ' deals')) : '—')
+        ]);
+        if (hasValue) {
+          td.addEventListener('click', function () { openDrillDown(stage, bucket, c.deals, c.amount); });
+          td.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrillDown(stage, bucket, c.deals, c.amount); }
+          });
+        }
+        row.appendChild(td);
+      });
+      var rt = agg.rowTotals[stage];
+      row.appendChild(el('td', { class: 'cell' }, [
+        text('div', 'cell-amount', fmtMoneyShort(rt.amount)),
+        text('div', 'cell-count', rt.count + (rt.count === 1 ? ' deal' : ' deals'))
+      ]));
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+
+    var tfoot = el('tfoot');
+    var totalsRow = el('tr', { class: 'totals-row' });
+    totalsRow.appendChild(el('th', { class: 'row-head' }, [document.createTextNode('Total')]));
+    BUCKETS.forEach(function (b) {
+      var ct = agg.colTotals[b];
+      totalsRow.appendChild(el('td', { class: 'cell' }, [
+        text('div', 'cell-amount', fmtMoneyShort(ct.amount)),
+        text('div', 'cell-count', ct.count + (ct.count === 1 ? ' deal' : ' deals'))
+      ]));
+    });
+    totalsRow.appendChild(el('td', { class: 'cell grand-total' }, [
+      text('div', 'cell-amount', fmtMoneyShort(agg.grand.amount)),
+      text('div', 'cell-count', agg.grand.count + (agg.grand.count === 1 ? ' deal' : ' deals'))
+    ]));
+    tfoot.appendChild(totalsRow);
+    table.appendChild(tfoot);
+  }
+
+  function renderEmptyState() {
+    var table = document.getElementById('matrixTable');
+    var wrap = document.querySelector('.table-scroll');
+    var existing = wrap.querySelector('.empty-state');
+    if (existing) existing.remove();
+    table.style.display = 'none';
+    wrap.appendChild(el('div', { class: 'empty-state' }, [
+      text('div', 'glyph', 'No data yet'),
+      el('h2', {}, [document.createTextNode('The nightly HubSpot pull hasn’t run')]),
+      text('p', '', 'Once the scheduled job writes its first snapshot, the matrix renders here automatically.')
+    ]));
+  }
+
+  function renderRefreshBadge() {
+    var badge = document.getElementById('refreshBadge');
+    var textEl = document.getElementById('refreshText');
+    badge.className = 'refresh-badge';
+    if (!state.lastRefresh) {
+      textEl.textContent = 'No refresh yet';
+      return;
+    }
+    var ts = new Date(state.lastRefresh.timestamp);
+    var ageHours = (Date.now() - ts.getTime()) / 3600000;
+    var stamp = ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    if (state.lastRefresh.status === 'failed') {
+      badge.className = 'refresh-badge failed';
+      textEl.textContent = 'Last pull failed — showing data as of ' + stamp;
+    } else if (ageHours > 36) {
+      badge.className = 'refresh-badge stale';
+      textEl.textContent = 'Stale — data as of ' + stamp;
+    } else {
+      textEl.textContent = 'Data as of ' + stamp;
+    }
+  }
+
+  function ageLabel(days) {
+    return days + (days === 1 ? ' day' : ' days');
+  }
+
+  function openDrillDown(stage, bucket, deals, totalAmount) {
+    var overlay = document.getElementById('overlay');
+    document.getElementById('modalTitle').textContent = stage + ' · ' + bucket + ' days';
+    var pipelineLabel = state.pipeline === 'combined' ? 'Combined' : (state.pipeline === 'new_business' ? 'New Business' : 'Expansion');
+    var metaParts = [pipelineLabel, state.quarter ? state.quarter : 'all quarters'];
+    if (state.owner) metaParts.push(state.owner);
+    document.getElementById('modalMeta').textContent = metaParts.join(' · ');
+
+    var sorted = deals.slice().sort(function (a, b) { return b.ageDays - a.ageDays; });
+    var body = document.getElementById('modalBody');
+    body.innerHTML = '';
+    sorted.forEach(function (d) {
+      body.appendChild(el('div', { class: 'deal-row' }, [
+        el('div', {}, [
+          text('div', 'deal-name', d.dealName),
+          text('div', 'deal-owner', d.ownerName)
+        ]),
+        text('div', 'deal-age' + (d.ageDays >= 226 ? ' old' : ''), ageLabel(d.ageDays)),
+        text('div', 'deal-amount', fmtMoney.format(d.amount)),
+        text('div', 'deal-age', '')
+      ]));
+    });
+
+    document.getElementById('modalFoot').textContent =
+      sorted.length + (sorted.length === 1 ? ' deal' : ' deals') + '  ·  ' + fmtMoney.format(totalAmount) + ' total';
+
+    overlay.hidden = false;
+  }
+
+  function closeDrillDown() { document.getElementById('overlay').hidden = true; }
+
+  document.getElementById('modalClose').addEventListener('click', closeDrillDown);
+  document.getElementById('overlay').addEventListener('click', function (e) {
+    if (e.target.id === 'overlay') closeDrillDown();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDrillDown();
+  });
+
+  document.getElementById('pipelineControl').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-pipeline]');
+    if (!btn) return;
+    Array.from(this.querySelectorAll('button')).forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    state.pipeline = btn.getAttribute('data-pipeline');
+    renderMatrix();
+  });
+
+  document.getElementById('quarterSelect').addEventListener('change', function (e) {
+    state.quarter = e.target.value;
+    renderMatrix();
+  });
+
+  document.getElementById('ownerSelect').addEventListener('change', function (e) {
+    state.owner = e.target.value;
+    renderMatrix();
+  });
+
+  async function loadData() {
+    // PostgREST caps a single request at 1000 rows -- open-deal volume here
+    // (~150 as of the last build) is comfortably under that, but request the
+    // max explicitly so a future volume increase doesn't silently truncate.
+    var dealsRes = await sb.from('matrix_deals').select('*').limit(5000);
+    if (dealsRes.error) throw new Error(dealsRes.error.message);
+    state.deals = (dealsRes.data || []).map(rowToDeal);
+
+    var metaRes = await sb.from('matrix_meta').select('payload').eq('key', 'last_refresh').maybeSingle();
+    if (metaRes.error) throw new Error(metaRes.error.message);
+    state.lastRefresh = metaRes.data ? metaRes.data.payload : null;
+  }
+
+  document.getElementById('signInBtn').addEventListener('click', async function () {
+    var res = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    if (res.error) {
+      var elErr = document.getElementById('gateErr');
+      elErr.hidden = false;
+      elErr.textContent = res.error.message;
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', function () {
+    sb.auth.signOut();
+  });
+
+  var booted = false;
+  async function boot(session) {
+    if (!session) {
+      document.getElementById('gate').hidden = false;
+      document.getElementById('app').hidden = true;
+      booted = false;
+      return;
+    }
+    if (booted) return; // avoid re-fetching on token-refresh auth events once loaded
+    booted = true;
+
+    document.getElementById('gate').hidden = true;
+    document.getElementById('app').hidden = false;
+
+    try {
+      await loadData();
+      renderFilterOptions();
+      renderRefreshBadge();
+      renderMatrix();
+    } catch (err) {
+      document.getElementById('matrixTable').outerHTML =
+        '<div class="empty-state"><div class="glyph">Error</div><h2>Could not load data</h2><p>' +
+        (err && err.message ? err.message : String(err)) + '</p></div>';
+    }
+  }
+
+  sb.auth.onAuthStateChange(function (_event, session) { boot(session); });
+})();
+</script>
