@@ -587,17 +587,17 @@
       cells[s] = {};
       BUCKETS.forEach(function (b) { cells[s][b] = { amount: 0, count: 0, deals: [] }; });
     });
-    var rowTotals = {}, colTotals = {}, grand = { amount: 0, count: 0 };
-    STAGES.forEach(function (s) { rowTotals[s] = { amount: 0, count: 0 }; });
-    BUCKETS.forEach(function (b) { colTotals[b] = { amount: 0, count: 0 }; });
+    var rowTotals = {}, colTotals = {}, grand = { amount: 0, count: 0, deals: [] };
+    STAGES.forEach(function (s) { rowTotals[s] = { amount: 0, count: 0, deals: [] }; });
+    BUCKETS.forEach(function (b) { colTotals[b] = { amount: 0, count: 0, deals: [] }; });
 
     deals.forEach(function (d) {
       if (!cells[d.stageLabel] || !cells[d.stageLabel][d.ageBucket]) return;
       var c = cells[d.stageLabel][d.ageBucket];
       c.amount += d.amount; c.count += 1; c.deals.push(d);
-      rowTotals[d.stageLabel].amount += d.amount; rowTotals[d.stageLabel].count += 1;
-      colTotals[d.ageBucket].amount += d.amount; colTotals[d.ageBucket].count += 1;
-      grand.amount += d.amount; grand.count += 1;
+      rowTotals[d.stageLabel].amount += d.amount; rowTotals[d.stageLabel].count += 1; rowTotals[d.stageLabel].deals.push(d);
+      colTotals[d.ageBucket].amount += d.amount; colTotals[d.ageBucket].count += 1; colTotals[d.ageBucket].deals.push(d);
+      grand.amount += d.amount; grand.count += 1; grand.deals.push(d);
     });
     return { cells: cells, rowTotals: rowTotals, colTotals: colTotals, grand: grand };
   }
@@ -688,10 +688,23 @@
         row.appendChild(td);
       });
       var rt = agg.rowTotals[stage];
-      row.appendChild(el('td', { class: 'cell' }, [
+      var rtHasValue = rt.count > 0;
+      var rtTd = el('td', {
+        class: 'cell' + (rtHasValue ? ' has-value' : ' empty'),
+        tabindex: rtHasValue ? '0' : '-1',
+        role: rtHasValue ? 'button' : undefined,
+        'aria-label': rtHasValue ? (stage + ' total, ' + fmtMoney.format(rt.amount) + ', ' + rt.count + ' deal' + (rt.count === 1 ? '' : 's')) : undefined
+      }, [
         text('div', 'cell-amount', fmtMoneyShort(rt.amount)),
         text('div', 'cell-count', rt.count + (rt.count === 1 ? ' deal' : ' deals'))
-      ]));
+      ]);
+      if (rtHasValue) {
+        rtTd.addEventListener('click', function () { openDrillDown(stage, 'all ages', rt.deals, rt.amount); });
+        rtTd.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrillDown(stage, 'all ages', rt.deals, rt.amount); }
+        });
+      }
+      row.appendChild(rtTd);
       tbody.appendChild(row);
     });
     table.appendChild(tbody);
@@ -701,15 +714,41 @@
     totalsRow.appendChild(el('th', { class: 'row-head' }, [document.createTextNode('Total')]));
     BUCKETS.forEach(function (b) {
       var ct = agg.colTotals[b];
-      totalsRow.appendChild(el('td', { class: 'cell' }, [
+      var ctHasValue = ct.count > 0;
+      var ctTd = el('td', {
+        class: 'cell' + (ctHasValue ? ' has-value' : ' empty'),
+        tabindex: ctHasValue ? '0' : '-1',
+        role: ctHasValue ? 'button' : undefined,
+        'aria-label': ctHasValue ? (b + ' days total, ' + fmtMoney.format(ct.amount) + ', ' + ct.count + ' deal' + (ct.count === 1 ? '' : 's')) : undefined
+      }, [
         text('div', 'cell-amount', fmtMoneyShort(ct.amount)),
         text('div', 'cell-count', ct.count + (ct.count === 1 ? ' deal' : ' deals'))
-      ]));
+      ]);
+      if (ctHasValue) {
+        ctTd.addEventListener('click', function () { openDrillDown('all stages', b, ct.deals, ct.amount); });
+        ctTd.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrillDown('all stages', b, ct.deals, ct.amount); }
+        });
+      }
+      totalsRow.appendChild(ctTd);
     });
-    totalsRow.appendChild(el('td', { class: 'cell grand-total' }, [
+    var grandHasValue = agg.grand.count > 0;
+    var grandTd = el('td', {
+      class: 'cell grand-total' + (grandHasValue ? ' has-value' : ' empty'),
+      tabindex: grandHasValue ? '0' : '-1',
+      role: grandHasValue ? 'button' : undefined,
+      'aria-label': grandHasValue ? ('Grand total, ' + fmtMoney.format(agg.grand.amount) + ', ' + agg.grand.count + ' deal' + (agg.grand.count === 1 ? '' : 's')) : undefined
+    }, [
       text('div', 'cell-amount', fmtMoneyShort(agg.grand.amount)),
       text('div', 'cell-count', agg.grand.count + (agg.grand.count === 1 ? ' deal' : ' deals'))
-    ]));
+    ]);
+    if (grandHasValue) {
+      grandTd.addEventListener('click', function () { openDrillDown('all stages', 'all ages', agg.grand.deals, agg.grand.amount); });
+      grandTd.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrillDown('all stages', 'all ages', agg.grand.deals, agg.grand.amount); }
+      });
+    }
+    totalsRow.appendChild(grandTd);
     tfoot.appendChild(totalsRow);
     table.appendChild(tfoot);
   }
@@ -755,7 +794,9 @@
 
   function openDrillDown(stage, bucket, deals, totalAmount) {
     var overlay = document.getElementById('overlay');
-    document.getElementById('modalTitle').textContent = stage + ' · ' + bucket + ' days';
+    var stageLabel = stage === 'all stages' ? 'All stages' : stage;
+    var bucketLabel = bucket === 'all ages' ? 'all ages' : (bucket + ' days');
+    document.getElementById('modalTitle').textContent = stageLabel + ' · ' + bucketLabel;
     var pipelineLabel = state.pipeline === 'combined' ? 'Combined' : (state.pipeline === 'new_business' ? 'New Business' : 'Expansion');
     var metaParts = [pipelineLabel, state.quarter ? state.quarter : 'all quarters'];
     if (state.owner) metaParts.push(state.owner);
