@@ -41,7 +41,7 @@
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif;
     padding: 32px clamp(16px, 4vw, 48px) 64px; margin: 0; }
-  .wrap { max-width: 1320px; margin: 0 auto; }
+  .wrap { max-width: 1380px; margin: 0 auto; }
   [hidden] { display: none !important; }
 
   .gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 16px; text-align: center; }
@@ -124,7 +124,7 @@
   .tip .sep { border-top: 1px solid var(--border); margin: 6px 0; }
 
   .table-scroll { overflow-x: auto; }
-  table.bk { border-collapse: collapse; width: 100%; min-width: 1240px; font-variant-numeric: tabular-nums; }
+  table.bk { border-collapse: collapse; width: 100%; min-width: 1180px; font-variant-numeric: tabular-nums; }
   table.bk th, table.bk td { border-bottom: 1px solid var(--border); padding: 0; }
   table.bk thead th { font: 500 11px 'IBM Plex Mono', monospace; color: var(--ink-secondary); text-transform: uppercase; letter-spacing: .04em;
     padding: 10px 8px; text-align: right; background: var(--surface-alt); white-space: nowrap; }
@@ -136,33 +136,33 @@
   table.bk thead th.sortable:hover { color: var(--ink); }
   table.bk thead th .arrow { opacity: .55; margin-left: 3px; }
   table.bk .divider { border-left: 2px solid var(--border); }
-  .name-cell { text-align: left; padding: 9px 12px 9px 16px; white-space: nowrap; font-size: 13.5px; }
+  table.bk td.name-cell { text-align: left; padding: 9px 12px 9px 16px; white-space: nowrap; font-size: 13.5px; }
   tr.state-row .name-cell { font-weight: 600; cursor: pointer; }
   tr.state-row .name-cell .chev { display: inline-block; width: 14px; color: var(--ink-faint); transition: transform .12s ease; font-size: 11px; }
   tr.state-row.open .name-cell .chev { transform: rotate(90deg); }
-  tr.market-row .name-cell { padding-left: 40px; color: var(--ink-secondary); font-size: 13px; }
+  table.bk tr.market-row td.name-cell { padding-left: 40px; color: var(--ink-secondary); font-size: 13px; }
   tr.market-row td { background: var(--surface-alt); }
   .tag { font: 500 10px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint);
     border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 8px; vertical-align: 1px; }
   .tag.former { color: var(--warning); border-color: var(--warning); }
-  td.num { text-align: right; padding: 8px 9px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; min-width: 92px; }
+  table.bk td.num { text-align: right; padding: 8px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; min-width: 78px; }
   td.num .n { display: block; font-size: 10.5px; color: var(--ink-secondary); margin-top: 1px; }
   td.num.has-value { cursor: pointer; }
   td.num.has-value:hover, td.num.has-value:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
   td.num.empty { color: var(--ink-faint); }
   td.num.dark { color: var(--on-seq-dark); }
   td.num.dark .n { color: var(--on-seq-dark); opacity: .8; }
-  td.num.plain { min-width: 76px; }
-  td.spark { padding: 6px 12px 6px 8px; width: 120px; }
+  table.bk td.num.plain { min-width: 60px; }
+  table.bk td.spark { padding: 6px 10px 6px 6px; width: 96px; }
   td.spark svg { display: block; }
   tr.totals-row td, tr.totals-row .name-cell { font-weight: 600; background: var(--surface-alt); border-top: 2px solid var(--border); }
-  td.yoy { text-align: right; padding: 8px 9px; font: 500 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
+  table.bk td.yoy { text-align: right; padding: 8px 9px; font: 500 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
 
   .rep-controls { display: flex; gap: 10px; align-items: center; }
   .check { display: inline-flex; gap: 7px; align-items: center; font-size: 13px; color: var(--ink-secondary); cursor: pointer; }
   .check input { accent-color: var(--accent); }
 
-  .notes { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.55; padding: 4px 20px 18px; }
+  .notes { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.55; padding: 16px 20px 18px; }
   .notes ul { margin: 8px 0 0; padding-left: 18px; }
   .notes li { margin-bottom: 4px; }
   .notes b { color: var(--ink); font-weight: 600; }
@@ -194,6 +194,14 @@
     .tile .st { font-size: 10px; }
     .tilemap { gap: 2px; }
   }
+  .credit { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; font-size: 11.5px; color: var(--ink-secondary); }
+  .credit a { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-secondary); text-decoration: none; }
+  .credit a:hover { color: var(--ink); }
+  .credit img { height: 16px; width: auto; display: block; }
+  .credit .logo-dark { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .credit .logo-light { display: none; } :root:not([data-theme="light"]) .credit .logo-dark { display: block; } }
+  :root[data-theme="dark"] .credit .logo-light { display: none; }
+  :root[data-theme="dark"] .credit .logo-dark { display: block; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -208,7 +216,7 @@
   <header class="page">
     <div>
       <h1>Bookings and TAM by State</h1>
-      <p class="subtitle">What VETRO has booked by HQ state and market, next to the remaining opportunity in each. The reality case for 2027 regional quotas. Bookings refresh nightly from HubSpot; TAM is Michaela's 2027 TAM model.</p>
+      <p class="subtitle">What VETRO has booked by HQ state and market, next to the remaining opportunity in each. Bookings refresh nightly from HubSpot. TAM source: 2027 TAM (claude build)_Active (7).xlsx.</p>
     </div>
     <div id="refreshBadge" class="refresh-badge"><span class="dot"></span><span id="refreshText">Loading&hellip;</span></div>
   </header>
@@ -265,7 +273,7 @@
       </div>
     </div>
     <div class="table-scroll"><table class="bk" id="repTable" style="min-width:900px"></table></div>
-    <div class="notes" style="padding-top:12px">Rep = the deal's HubSpot owner today. Reassigned deals follow the current owner. Follows the bookings type, geography and market filters above. "Former" = owner deactivated in HubSpot.</div>
+    <div class="notes" style="padding-top:12px">Rep = the deal's HubSpot owner today. Reassigned deals follow the current owner. Follows the bookings type, geography and market filters above. "Former" = owner deactivated in HubSpot. "Former reps" = deals whose owner was removed from HubSpot entirely.</div>
   </div>
 
   <div class="card">
@@ -279,11 +287,20 @@
         <li><b>Market</b> = the 2027 Updated Sub-Vertical from the TAM model. Bookings companies use the model's classification; companies outside it are mapped from their HubSpot sub-vertical with the model's crosswalk.</li>
         <li><b>Carve-outs</b> (tagged) = Co-op, Engineering Firm, Government. International is its own view; TAM covers US and Canada only.</li>
         <li><b>TAM accounts</b> = all companies in the model. <b>Customers</b> = lifecycle Customer. <b>Prospects</b> = TAM less customers. <b>SAM</b> = prospects after the model's fiber and mapping screens. <b>SOM</b> = SAM after the fiber share, BDC, network-ownership and government-population screens. <b>SOM $</b> = SOM accounts × the segment's average initial new-logo ARR (the model's method). <b>Penetration</b> = customers ÷ TAM accounts.</li>
-        <li>TAM is a snapshot of the model's "Updated TAM (CRM)" tab as of 2026-10-15; it does not refresh nightly. Totals tie to the model's TAM Summary (US: 12,264 TAM, 285 customers, 8,054 SAM, 5,743 SOM, $185.4M SOM $).</li>
+        <li><b>TAM source file:</b> 2027 TAM (claude build)_Active (7).xlsx, "Updated TAM (CRM)" tab as of 2026-10-15. It is a snapshot; it does not refresh nightly. Totals tie to the model's TAM Summary (US: 12,264 TAM, 285 customers, 8,054 SAM, 5,743 SOM, $185.4M SOM $).</li>
         <li><b>2026 YTD</b> runs through today. The YTD tile compares against 2025 through the same calendar date.</li>
+        <li><b>YoY 25</b> = 2025 vs 2024 bookings. "from $0" means nothing was booked in 2024, so there is no % change to show.</li>
       </ul>
     </div>
   </div>
+  <footer class="credit">
+    <span>Prepared by</span>
+    <a href="https://www.revopsinflection.com" target="_blank" rel="noopener" aria-label="RevOps Inflection, www.revopsinflection.com">
+      <img class="logo-light" src="ri-logo-black.png" alt="RevOps Inflection">
+      <img class="logo-dark" src="ri-logo-white.png" alt="RevOps Inflection">
+      <span>www.revopsinflection.com</span>
+    </a>
+  </footer>
 </div>
 
 <div class="tip" id="tip" hidden></div>
@@ -395,7 +412,8 @@
       id: r.hubspot_deal_id, name: r.deal_name, company: r.company_name || '(no company)', motion: r.motion,
       amount: Number(r.amount) || 0, closeDate: r.close_date ? new Date(r.close_date) : null, year: r.close_year,
       isUS: !!r.is_us, state: r.state_code, country: r.country || 'Unknown', market: r.market || 'Other',
-      owner: r.owner_name || 'Unassigned', ownerActive: r.owner_active
+      owner: (!r.owner_name || r.owner_name === 'Unassigned') ? 'Former reps' : r.owner_name,
+      ownerActive: (!r.owner_name || r.owner_name === 'Unassigned') ? false : r.owner_active
     };
   }
   function rowToTam(r) {
@@ -546,7 +564,7 @@
 
   // ---------- shared cells ----------
   function spark(b, firstYear) {
-    var w = 96, h = 26, pad = 3, ys = [];
+    var w = 80, h = 26, pad = 3, ys = [];
     for (var y = firstYear; y <= CUR_YEAR; y++) ys.push(b.y[String(y)] || 0);
     var max = Math.max.apply(null, ys.concat([1])), min = 0;
     var pts = ys.map(function (v, i) {
@@ -590,11 +608,15 @@
   function yoyText(b) {
     var a = b.y[String(CUR_YEAR - 2)] || 0, c = b.y[String(CUR_YEAR - 1)] || 0;
     if (!a && !c) return '';
-    if (!a) return 'new';
+    if (!a) return 'from $0';
     var pct = Math.round((c / a - 1) * 100);
     return pct >= 300 ? (c / a).toFixed(1).replace(/\.0$/, '') + 'x' : (pct > 0 ? '+' : '') + pct + '%';
   }
-  function yoyCell(b) { return el('td', { class: 'yoy', title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, [yoyText(b)]); }
+  function yoyCell(b) {
+    var t = yoyText(b);
+    var tip = t === 'from $0' ? 'No ' + (CUR_YEAR - 2) + ' bookings, so no % change: ' + (CUR_YEAR - 1) + ' bookings vs $0 in ' + (CUR_YEAR - 2) : (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2);
+    return el('td', { class: 'yoy', title: tip }, [t]);
+  }
   function sortHeader(label, key, state, cls, onSort, title) {
     var arrow = state.key === key ? (state.dir > 0 ? '▲' : '▼') : '';
     var h = el('th', { class: (cls || '') + ' sortable', tabindex: '0', title: title || null,
@@ -730,7 +752,7 @@
     var firstYear = CUR_YEAR - 7, tbody = el('tbody');
     list.forEach(function (R) {
       var tr = el('tr');
-      tr.appendChild(el('td', { class: 'name-cell', style: 'font-weight:600' }, [R.name, R.active === false ? el('span', { class: 'tag former' }, ['former']) : null]));
+      tr.appendChild(el('td', { class: 'name-cell', style: 'font-weight:600' }, [R.name, R.active === false && R.name !== 'Former reps' ? el('span', { class: 'tag former' }, ['former']) : null]));
       PERIODS.forEach(function (p) { tr.appendChild(numCell(R.b, p, colMax[p], R.name)); });
       tr.appendChild(yoyCell(R.b));
       var a = avg3(R.b);
