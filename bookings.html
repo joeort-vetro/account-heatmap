@@ -7,12 +7,12 @@
 
   :root {
     --bg: #f4f7f6; --surface: #ffffff; --surface-alt: #eaf1ef; --border: #d6e0dd;
-    --ink: #16222b; --ink-secondary: #55636a; --ink-faint: #687579;
+    --ink: #16222b; --ink-secondary: #55636a; --ink-faint: #5f6b6f;
     --accent: #157a6d; --accent-strong: #0f5c52; --accent-tint: #d7ece8; --accent-2: #2f6fa8;
     --warning: #c74a1a; --warning-tint: #fbe6da;
-    --seq-0: #eef3f2; --seq-1: #cbe3de; --seq-2: #9fcdc4; --seq-3: #6bb2a5; --seq-4: #368f80; --seq-5: #146357;
-    --opp-1: #d9e6f2; --opp-2: #b3cde6; --opp-3: #7faad3; --opp-4: #4f86bd; --opp-5: #2b5f93;
-    --on-seq-dark: #ffffff;
+    --seq-0: #eef3f2; --seq-1: #cbe3de; --seq-2: #9fcdc4; --seq-3: #6bb2a5; --seq-4: #2c7c6f; --seq-5: #146357;
+    --opp-1: #d9e6f2; --opp-2: #b3cde6; --opp-3: #7faad3; --opp-4: #3d72a8; --opp-5: #2b5f93;
+    --on-seq-dark: #ffffff; --on-accent: #ffffff;
     --shadow: 0 1px 2px rgba(15, 40, 35, 0.06), 0 8px 24px rgba(15, 40, 35, 0.06);
   }
   @media (prefers-color-scheme: dark) {
@@ -21,9 +21,9 @@
       --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #85998f;
       --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
       --warning: #ff8a52; --warning-tint: #3a2418;
-      --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
-      --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #3a6f9f; --opp-5: #6fa9dd;
-      --on-seq-dark: #06110e;
+      --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #33a08a; --seq-5: #33c2ab;
+      --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #4f8cc4; --opp-5: #6fa9dd;
+      --on-seq-dark: #06110e; --on-accent: #06110e;
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
     }
   }
@@ -32,9 +32,9 @@
     --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #85998f;
     --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
     --warning: #ff8a52; --warning-tint: #3a2418;
-    --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
-    --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #3a6f9f; --opp-5: #6fa9dd;
-    --on-seq-dark: #06110e;
+    --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #33a08a; --seq-5: #33c2ab;
+    --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #4f8cc4; --opp-5: #6fa9dd;
+    --on-seq-dark: #06110e; --on-accent: #06110e;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
@@ -47,7 +47,7 @@
   .gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 16px; text-align: center; }
   .gate h1 { font-family: 'Raleway', system-ui, sans-serif; font-size: 26px; margin: 0; }
   .gate p { color: var(--ink-secondary); font-size: 14px; margin: 0; }
-  .gate button { background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 11px 22px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .gate button { background: var(--accent); color: var(--on-accent); border: none; border-radius: 9px; padding: 11px 22px; font-size: 14px; font-weight: 500; cursor: pointer; }
   .gate .err { color: var(--warning); font-size: 13px; max-width: 420px; }
 
   header.page { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; }
@@ -65,11 +65,11 @@
   .control-group button { font: 500 13px 'Raleway', system-ui, sans-serif; color: var(--ink-secondary); background: transparent; border: none;
     border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: background .12s ease, color .12s ease; }
   .control-group button:hover { color: var(--ink); }
-  .control-group button.active { background: var(--accent); color: #fff; }
+  .control-group button.active { background: var(--accent); color: var(--on-accent); }
   .btn { font: 500 13px 'Raleway', system-ui, sans-serif; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
     border-radius: 9px; padding: 9px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
   .btn:hover { border-color: var(--accent); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .btn.primary:hover { background: var(--accent-strong); }
   .sign-out { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-secondary); cursor: pointer; }
   .spacer { margin-left: auto; }
