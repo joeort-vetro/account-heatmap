@@ -1,0 +1,660 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VETRO Bookings by State</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f4f7f6; --surface: #ffffff; --surface-alt: #eaf1ef; --border: #d6e0dd;
+    --ink: #16222b; --ink-secondary: #55636a; --ink-faint: #8b979a;
+    --accent: #157a6d; --accent-strong: #0f5c52; --accent-tint: #d7ece8; --accent-2: #2f6fa8;
+    --warning: #c74a1a; --warning-tint: #fbe6da;
+    --seq-0: #eef3f2; --seq-1: #cbe3de; --seq-2: #9fcdc4; --seq-3: #6bb2a5; --seq-4: #368f80; --seq-5: #146357;
+    --on-seq-dark: #ffffff;
+    --shadow: 0 1px 2px rgba(15, 40, 35, 0.06), 0 8px 24px rgba(15, 40, 35, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1714; --surface: #131f1c; --surface-alt: #182823; --border: #23362f;
+      --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #718780;
+      --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
+      --warning: #ff8a52; --warning-tint: #3a2418;
+      --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
+      --on-seq-dark: #06110e;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1714; --surface: #131f1c; --surface-alt: #182823; --border: #23362f;
+    --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #718780;
+    --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
+    --warning: #ff8a52; --warning-tint: #3a2418;
+    --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
+    --on-seq-dark: #06110e;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    padding: 32px clamp(16px, 4vw, 48px) 64px; margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  [hidden] { display: none !important; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+
+  .gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 16px; text-align: center; }
+  .gate h1 { font-family: 'Fraunces', Georgia, serif; font-size: 26px; margin: 0; }
+  .gate p { color: var(--ink-secondary); font-size: 14px; margin: 0; }
+  .gate button { background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 11px 22px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .gate .err { color: var(--warning); font-size: 13px; max-width: 420px; }
+
+  header.page { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; }
+  h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
+  h2.section { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 19px; margin: 0; }
+  .subtitle { color: var(--ink-secondary); font-size: 14px; margin: 0; max-width: 640px; }
+  .refresh-badge { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-secondary); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .refresh-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .refresh-badge.stale, .refresh-badge.failed { color: var(--warning); border-color: var(--warning); background: var(--warning-tint); }
+  .refresh-badge.stale .dot, .refresh-badge.failed .dot { background: var(--warning); }
+
+  .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .control-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 2px; }
+  .control-group button { font: 500 13px 'IBM Plex Sans', sans-serif; color: var(--ink-secondary); background: transparent; border: none;
+    border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: background .12s ease, color .12s ease; }
+  .control-group button:hover { color: var(--ink); }
+  .control-group button.active { background: var(--accent); color: #fff; }
+  select.sel { font: 500 13px 'IBM Plex Sans', sans-serif; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 34px 9px 13px; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2355636a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; }
+  .sign-out { margin-left: auto; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-secondary); cursor: pointer; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi .label { font: 500 11.5px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-secondary); }
+  .kpi .value { font: 600 24px 'IBM Plex Mono', monospace; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { font-size: 12px; color: var(--ink-secondary); }
+  .kpi .sub b { font-weight: 600; color: var(--ink); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px; }
+  .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px 0; }
+  .card-note { font-size: 12.5px; color: var(--ink-secondary); }
+
+  /* Tile-grid map */
+  .map-wrap { padding: 16px 20px 8px; }
+  .tilemap { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; max-width: 760px; margin: 0 auto; }
+  .tile { aspect-ratio: 1 / 0.82; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace; background: var(--seq-0); color: var(--ink); cursor: default; position: relative;
+    border: 1px solid transparent; transition: outline .1s ease; min-width: 0; }
+  .tile .st { font-size: 12px; font-weight: 600; line-height: 1; }
+  .tile .amt { font-size: 10px; opacity: .85; margin-top: 3px; line-height: 1; white-space: nowrap; }
+  .tile.has-value { cursor: pointer; }
+  .tile.has-value:hover, .tile.has-value:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+  .tile.dark { color: var(--on-seq-dark); }
+  .tile.none { color: var(--ink-faint); background: transparent; border: 1px dashed var(--border); }
+  .tile.selected { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .legend { display: flex; align-items: center; gap: 10px; padding: 12px 20px 16px; font-size: 12px; color: var(--ink-secondary); flex-wrap: wrap; }
+  .legend .ramp { display: flex; gap: 2px; }
+  .legend .ramp span { width: 16px; height: 10px; border-radius: 2px; }
+
+  .tip { position: fixed; z-index: 60; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--shadow); padding: 10px 12px; font-size: 12.5px; min-width: 190px; }
+  .tip .t { font-weight: 600; margin-bottom: 6px; }
+  .tip .r { display: flex; justify-content: space-between; gap: 16px; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--ink-secondary); }
+  .tip .r b { color: var(--ink); font-weight: 600; }
+
+  /* Table */
+  .table-scroll { overflow-x: auto; }
+  table.bk { border-collapse: collapse; width: 100%; min-width: 820px; font-variant-numeric: tabular-nums; }
+  table.bk th, table.bk td { border-bottom: 1px solid var(--border); padding: 0; }
+  table.bk thead th { font: 500 11.5px 'IBM Plex Mono', monospace; color: var(--ink-secondary); text-transform: uppercase; letter-spacing: .04em;
+    padding: 12px 10px; text-align: right; background: var(--surface-alt); white-space: nowrap; position: sticky; top: 0; }
+  table.bk thead th.l { text-align: left; padding-left: 16px; }
+  table.bk thead th.sortable { cursor: pointer; }
+  table.bk thead th.sortable:hover { color: var(--ink); }
+  table.bk thead th .arrow { opacity: .55; margin-left: 3px; }
+  .name-cell { text-align: left; padding: 9px 12px 9px 16px; white-space: nowrap; font-size: 13.5px; }
+  tr.state-row .name-cell { font-weight: 600; cursor: pointer; }
+  tr.state-row .name-cell .chev { display: inline-block; width: 14px; color: var(--ink-faint); transition: transform .12s ease; font-size: 11px; }
+  tr.state-row.open .name-cell .chev { transform: rotate(90deg); }
+  tr.market-row .name-cell { padding-left: 40px; color: var(--ink-secondary); font-size: 13px; }
+  tr.market-row td { background: var(--surface-alt); }
+  .tag { font: 500 10px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint);
+    border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 8px; vertical-align: 1px; }
+  td.num { text-align: right; padding: 8px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 104px; }
+  td.num .n { display: block; font-size: 10.5px; color: var(--ink-secondary); margin-top: 1px; }
+  td.num.has-value { cursor: pointer; }
+  td.num.has-value:hover, td.num.has-value:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
+  td.num.empty { color: var(--ink-faint); }
+  td.num.dark { color: var(--on-seq-dark); }
+  td.num.dark .n { color: var(--on-seq-dark); opacity: .8; }
+  td.spark { padding: 6px 16px 6px 10px; width: 132px; }
+  td.spark svg { display: block; }
+  tr.totals-row td, tr.totals-row .name-cell { font-weight: 600; background: var(--surface-alt); border-top: 2px solid var(--border); }
+  td.yoy { text-align: right; padding: 8px 10px; font: 500 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
+
+  .notes { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.55; padding: 4px 20px 18px; }
+  .notes ul { margin: 8px 0 0; padding-left: 18px; }
+  .notes li { margin-bottom: 4px; }
+  .notes b { color: var(--ink); font-weight: 600; }
+
+  .empty-state { padding: 64px 24px; text-align: center; color: var(--ink-secondary); }
+  .empty-state .glyph { font: 12px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+  .empty-state h2 { font-family: 'Fraunces', serif; font-size: 20px; color: var(--ink); margin: 0 0 8px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(10, 20, 18, .45); display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px; z-index: 50; }
+  .modal { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); width: 100%; max-width: 720px;
+    max-height: 86vh; display: flex; flex-direction: column; overflow: hidden; }
+  .modal-head { padding: 20px 22px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .modal-head h2 { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; margin: 0 0 4px; }
+  .modal-head .meta { font: 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); }
+  .modal-close { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; width: 30px; height: 30px; font-size: 16px; color: var(--ink-secondary); cursor: pointer; flex: none; }
+  .modal-body { overflow-y: auto; padding: 6px 0; }
+  .deal-row { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 10px 22px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .deal-row:last-child { border-bottom: none; }
+  .deal-name a { color: var(--ink); font-weight: 500; text-decoration: none; }
+  .deal-name a:hover { text-decoration: underline; }
+  .deal-sub { color: var(--ink-secondary); font-size: 12px; }
+  .deal-date { font: 11.5px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
+  .deal-amount { font: 600 13px 'IBM Plex Mono', monospace; text-align: right; }
+  .modal-foot { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-alt); font: 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); }
+
+  @media (max-width: 760px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile .amt { display: none; }
+    .tile .st { font-size: 10px; }
+    .tilemap { gap: 2px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="gate" id="gate">
+  <h1>VETRO Bookings by State</h1>
+  <p>Sign in with your @vetrofibermap.com Google account to continue.</p>
+  <button id="signInBtn">Sign in with Google</button>
+  <div class="err" id="gateErr" hidden></div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header class="page">
+    <div>
+      <h1>Bookings by State</h1>
+      <p class="subtitle">Closed-won bookings by HQ state, then market. The historical half of 2027 regional quota setting. HubSpot-sourced, refreshed nightly.</p>
+    </div>
+    <div id="refreshBadge" class="refresh-badge"><span class="dot"></span><span id="refreshText">Loading&hellip;</span></div>
+  </header>
+
+  <div class="controls">
+    <div class="control-group" id="motionControl" role="group" aria-label="Bookings type">
+      <button data-v="new_logo" class="active">New logo</button>
+      <button data-v="expansion">Expansion</button>
+      <button data-v="all">Both</button>
+    </div>
+    <div class="control-group" id="geoControl" role="group" aria-label="Geography">
+      <button data-v="us" class="active">US states</button>
+      <button data-v="intl">International</button>
+    </div>
+    <select id="marketSelect" class="sel" aria-label="Market"></select>
+    <button class="sign-out" id="signOutBtn">Sign out</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" id="mapCard">
+    <div class="card-head">
+      <h2 class="section">Where bookings land</h2>
+      <div class="control-group" id="periodControl" role="group" aria-label="Map period"></div>
+    </div>
+    <div class="map-wrap"><div class="tilemap" id="tilemap"></div></div>
+    <div class="legend">
+      <span>Shade = bookings $ for the selected period</span>
+      <span class="ramp"><span style="background:var(--seq-1)"></span><span style="background:var(--seq-2)"></span><span style="background:var(--seq-3)"></span><span style="background:var(--seq-4)"></span><span style="background:var(--seq-5)"></span></span>
+      <span>low &rarr; high</span>
+      <span style="margin-left:12px">Dashed = no bookings</span>
+      <span style="margin-left:auto">Click a state to open its markets below</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head" style="padding-bottom:12px">
+      <h2 class="section" id="tableTitle">By state and market</h2>
+      <span class="card-note">Click a row to expand markets. Click any number for the deals behind it.</span>
+    </div>
+    <div class="table-scroll"><table class="bk" id="bkTable"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="notes">
+      <b>How this is counted</b>
+      <ul>
+        <li><b>New logo</b> = New Business pipeline, Closed Won, deal Amount (ARR).</li>
+        <li><b>Expansion</b> = Expansion pipeline Upsell deals, plus pre-2025 mid-contract upsells booked in the Renewal pipeline (net recurring change). Mid-contract downgrades are excluded, so this is gross upsell. The Expansion pipeline starts in 2025, so pre-2025 expansion depends on how those renewal deals were logged.</li>
+        <li><b>Excluded:</b> renewals, price-increase escalators, non-recurring-only and partner pipelines, deals with no close date, and closed-won deals dated in the future (pre-booked out-years of multi-year contracts).</li>
+        <li><b>State</b> = the deal's primary company HQ state in HubSpot. A multi-state operator's full deal lands in its HQ state, not its service footprint.</li>
+        <li><b>Market</b> = the company's current HubSpot Sub-Vertical. Segments are being re-mapped to the new 2027 segment model; markets here will shift when that import lands.</li>
+        <li><b>Carve-outs</b> (tagged) = Co-ops, Engineering Firms, Government / SLED. International is its own view.</li>
+        <li><b>2026 YTD</b> runs through today. The YTD tile compares against 2025 through the same calendar date.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div><h2 id="modalTitle">Deals</h2><div class="meta" id="modalMeta"></div></div>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Reads bookings_deals / bookings_meta (written nightly by
+  // pull-hubspot-bookings.mjs) from the same Supabase project and behind the
+  // same @vetrofibermap.com Google sign-in as index.html and matrix.html.
+  // Every number on the page is summed client-side from the same deal rows the
+  // drill-down lists, so a clicked number always matches its deal list.
+
+  var SUPABASE_URL = "https://koigqgfrmhitdmobtvpi.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvaWdxZ2ZybWhpdGRtb2J0dnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5OTg4MjcsImV4cCI6MjEwNDU3NDgyN30.wUyqkGw1E_oJveEl-ekSM2QGB2JUYEn_a2WJ8TuSbYo";
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var HUBSPOT_DEAL_URL = 'https://app.hubspot.com/contacts/8186371/record/0-3/';
+
+  var NOW = new Date();
+  var CUR_YEAR = NOW.getFullYear();
+  var YEARS = [CUR_YEAR - 2, CUR_YEAR - 1, CUR_YEAR];
+  var PERIODS = YEARS.map(String).concat(['all']);
+  var periodLabel = function (p) { return p === 'all' ? 'All-time' : (+p === CUR_YEAR ? p + ' YTD' : p); };
+
+  var MARKETS = ['ISP Tier 1', 'ISP Tier 2', 'ISP Tier 3', 'ISP Tier 4', 'Dark Fiber / Middle Mile', 'Other', 'Co-ops', 'Engineering Firms', 'Government / SLED'];
+  var CARVE_OUTS = { 'Co-ops': 1, 'Engineering Firms': 1, 'Government / SLED': 1 };
+
+  var STATES = {
+    AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware',
+    DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
+    KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota',
+    MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
+    NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon',
+    PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah',
+    VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', PR: 'Puerto Rico',
+    GU: 'Guam', VI: 'U.S. Virgin Islands'
+  };
+  // [col, row] on a 12-column tile grid.
+  var TILES = {
+    AK: [0, 0], ME: [11, 0],
+    WI: [6, 1], VT: [10, 1], NH: [11, 1],
+    WA: [1, 2], ID: [2, 2], MT: [3, 2], ND: [4, 2], MN: [5, 2], IL: [6, 2], MI: [7, 2], NY: [9, 2], MA: [10, 2],
+    OR: [1, 3], NV: [2, 3], WY: [3, 3], SD: [4, 3], IA: [5, 3], IN: [6, 3], OH: [7, 3], PA: [8, 3], NJ: [9, 3], CT: [10, 3], RI: [11, 3],
+    CA: [1, 4], UT: [2, 4], CO: [3, 4], NE: [4, 4], MO: [5, 4], KY: [6, 4], WV: [7, 4], VA: [8, 4], MD: [9, 4], DE: [10, 4],
+    AZ: [2, 5], NM: [3, 5], KS: [4, 5], AR: [5, 5], TN: [6, 5], NC: [7, 5], SC: [8, 5], DC: [9, 5],
+    OK: [4, 6], LA: [5, 6], MS: [6, 6], AL: [7, 6], GA: [8, 6],
+    HI: [0, 7], TX: [4, 7], FL: [9, 7], PR: [11, 7]
+  };
+  var SEQ = ['var(--seq-1)', 'var(--seq-2)', 'var(--seq-3)', 'var(--seq-4)', 'var(--seq-5)'];
+
+  var S = { deals: [], meta: null, motion: 'new_logo', geo: 'us', market: '', period: 'all', sortKey: 'name', sortDir: 1, open: {} };
+
+  var fmtMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  function short(n) {
+    var a = Math.abs(n), s = n < 0 ? '-' : '';
+    if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'M';
+    if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
+    return s + '$' + Math.round(a);
+  }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (attrs[k] === undefined || attrs[k] === null) continue;
+      if (k === 'class') e.className = attrs[k]; else if (k === 'style') e.style.cssText = attrs[k]; else e.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function activate(btn, cb) {
+    btn.addEventListener('click', cb);
+    btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cb(e); } });
+  }
+
+  // ---------- data ----------
+  function rowToDeal(r) {
+    var cd = r.close_date ? new Date(r.close_date) : null;
+    return {
+      id: r.hubspot_deal_id, name: r.deal_name, company: r.company_name || '(no company)', motion: r.motion,
+      amount: Number(r.amount) || 0, closeDate: cd, year: r.close_year, isUS: !!r.is_us, state: r.state_code,
+      country: r.country || 'Unknown', market: r.market || 'Other', subVertical: r.sub_vertical, owner: r.owner_name || 'Unassigned'
+    };
+  }
+  function geoKey(d) {
+    if (S.geo === 'us') return d.isUS ? (d.state || '??') : null;
+    return d.isUS ? null : d.country;
+  }
+  function geoName(k) {
+    if (S.geo === 'us') return k === '??' ? 'State not set' : (STATES[k] || k);
+    return k;
+  }
+  function inScope(d) {
+    if (S.motion !== 'all' && d.motion !== S.motion) return false;
+    if (S.market === 'core' && CARVE_OUTS[d.market]) return false;
+    if (S.market && S.market !== 'core' && d.market !== S.market) return false;
+    return geoKey(d) !== null;
+  }
+  function bucket() { return { y: {}, all: 0, n: { all: 0 }, deals: { all: [] } }; }
+  function add(b, d) {
+    var y = String(d.year);
+    b.y[y] = (b.y[y] || 0) + d.amount; b.n[y] = (b.n[y] || 0) + 1; (b.deals[y] = b.deals[y] || []).push(d);
+    b.all += d.amount; b.n.all += 1; b.deals.all.push(d);
+  }
+  function val(b, p) { return p === 'all' ? b.all : (b.y[p] || 0); }
+  function aggregate() {
+    var deals = S.deals.filter(inScope);
+    var geo = {}, total = bucket();
+    deals.forEach(function (d) {
+      var k = geoKey(d);
+      var g = geo[k] || (geo[k] = { key: k, b: bucket(), markets: {} });
+      add(g.b, d);
+      add(g.markets[d.market] || (g.markets[d.market] = bucket()), d);
+      add(total, d);
+    });
+    return { geo: geo, total: total, deals: deals };
+  }
+
+  // ---------- KPIs ----------
+  function renderKpis(agg) {
+    var box = document.getElementById('kpis'); box.innerHTML = '';
+    var md = [NOW.getMonth(), NOW.getDate()];
+    var prevSamePeriod = agg.deals.filter(function (d) {
+      if (d.year !== CUR_YEAR - 1 || !d.closeDate) return false;
+      var m = d.closeDate.getUTCMonth(), day = d.closeDate.getUTCDate();
+      return m < md[0] || (m === md[0] && day <= md[1]);
+    }).reduce(function (s, d) { return s + d.amount; }, 0);
+    PERIODS.forEach(function (p) {
+      var v = val(agg.total, p), n = agg.total.n[p] || 0, sub;
+      if (+p === CUR_YEAR) {
+        var pct = prevSamePeriod ? Math.round((v / prevSamePeriod - 1) * 100) : null;
+        sub = el('div', { class: 'sub' }, [n + ' deals · vs ', el('b', {}, [short(prevSamePeriod)]), ' same period ' + (CUR_YEAR - 1) + (pct === null ? '' : ' (' + (pct > 0 ? '+' : '') + pct + '%)')]);
+      } else if (p === 'all') {
+        var first = agg.deals.reduce(function (m, d) { return Math.min(m, d.year); }, 9999);
+        sub = el('div', { class: 'sub' }, [n + ' deals' + (first < 9999 ? ' since ' + first : '')]);
+      } else {
+        var prior = agg.total.y[String(+p - 1)];
+        var yoy = prior ? Math.round((v / prior - 1) * 100) : null;
+        sub = el('div', { class: 'sub' }, [n + ' deals' + (yoy === null ? '' : ' · ' + (yoy > 0 ? '+' : '') + yoy + '% YoY')]);
+      }
+      box.appendChild(el('div', { class: 'kpi' }, [el('div', { class: 'label' }, [periodLabel(p)]), el('div', { class: 'value' }, [short(v)]), sub]));
+    });
+  }
+
+  // ---------- map ----------
+  function step(v, max) { if (v <= 0 || !max) return -1; return Math.max(0, Math.min(4, Math.ceil((v / max) * 5) - 1)); }
+  function renderPeriodControl() {
+    var c = document.getElementById('periodControl'); c.innerHTML = '';
+    PERIODS.forEach(function (p) {
+      var b = el('button', { class: p === S.period ? 'active' : '' }, [periodLabel(p)]);
+      b.addEventListener('click', function () { S.period = p; render(); });
+      c.appendChild(b);
+    });
+  }
+  function renderMap(agg) {
+    var card = document.getElementById('mapCard');
+    card.hidden = S.geo !== 'us';
+    if (card.hidden) return;
+    var grid = document.getElementById('tilemap'); grid.innerHTML = '';
+    var max = 0;
+    Object.keys(agg.geo).forEach(function (k) { max = Math.max(max, val(agg.geo[k].b, S.period)); });
+    Object.keys(TILES).forEach(function (code) {
+      var g = agg.geo[code], v = g ? val(g.b, S.period) : 0, s = step(v, max);
+      var cls = 'tile' + (v > 0 ? ' has-value' : ' none') + (s >= 3 ? ' dark' : '') + (S.open[code] ? ' selected' : '');
+      var t = el('div', {
+        class: cls, style: 'grid-column:' + (TILES[code][0] + 1) + ';grid-row:' + (TILES[code][1] + 1) + (s >= 0 ? ';background:' + SEQ[s] : ''),
+        tabindex: v > 0 ? '0' : null, role: v > 0 ? 'button' : null,
+        'aria-label': STATES[code] + ', ' + periodLabel(S.period) + ', ' + fmtMoney.format(v)
+      }, [el('span', { class: 'st' }, [code]), v > 0 ? el('span', { class: 'amt' }, [short(v)]) : null]);
+      t.addEventListener('mouseenter', function (e) { showTip(e, code, g); });
+      t.addEventListener('mousemove', moveTip);
+      t.addEventListener('mouseleave', hideTip);
+      if (v > 0) activate(t, function () {
+        S.open[code] = true; render();
+        var row = document.querySelector('tr[data-key="' + code + '"]');
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      grid.appendChild(t);
+    });
+  }
+  function showTip(e, code, g) {
+    var tip = document.getElementById('tip'); tip.innerHTML = '';
+    tip.appendChild(el('div', { class: 't' }, [STATES[code]]));
+    PERIODS.forEach(function (p) {
+      var v = g ? val(g.b, p) : 0, n = g ? (g.b.n[p] || 0) : 0;
+      tip.appendChild(el('div', { class: 'r' }, [periodLabel(p), el('b', {}, [short(v) + (n ? ' · ' + n : '')])]));
+    });
+    tip.hidden = false; moveTip(e);
+  }
+  function moveTip(e) {
+    var tip = document.getElementById('tip');
+    var x = e.clientX + 14, y = e.clientY + 14;
+    if (x + tip.offsetWidth > window.innerWidth - 8) x = e.clientX - tip.offsetWidth - 14;
+    if (y + tip.offsetHeight > window.innerHeight - 8) y = e.clientY - tip.offsetHeight - 14;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  function hideTip() { document.getElementById('tip').hidden = true; }
+
+  // ---------- table ----------
+  function spark(b, firstYear) {
+    var w = 106, h = 26, pad = 3, ys = [];
+    for (var y = firstYear; y <= CUR_YEAR; y++) ys.push(b.y[String(y)] || 0);
+    var max = Math.max.apply(null, ys.concat([1])), min = Math.min.apply(null, ys.concat([0]));
+    var pts = ys.map(function (v, i) {
+      var x = pad + (ys.length === 1 ? 0 : i * (w - pad * 2) / (ys.length - 1));
+      var yy = h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2);
+      return [x, yy];
+    });
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('aria-hidden', 'true');
+    var base = document.createElementNS(ns, 'line');
+    base.setAttribute('x1', pad); base.setAttribute('x2', w - pad); base.setAttribute('y1', h - pad); base.setAttribute('y2', h - pad);
+    base.setAttribute('stroke', 'var(--border)'); base.setAttribute('stroke-width', '1'); svg.appendChild(base);
+    var path = document.createElementNS(ns, 'polyline');
+    path.setAttribute('points', pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '));
+    path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'var(--accent)'); path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linejoin', 'round'); path.setAttribute('stroke-linecap', 'round'); svg.appendChild(path);
+    var last = pts[pts.length - 1], dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('cx', last[0]); dot.setAttribute('cy', last[1]); dot.setAttribute('r', '2.5'); dot.setAttribute('fill', 'var(--accent)');
+    svg.appendChild(dot);
+    var title = document.createElementNS(ns, 'title'); title.textContent = 'Trend ' + firstYear + '-' + CUR_YEAR + ' (' + CUR_YEAR + ' is YTD)';
+    svg.appendChild(title);
+    return svg;
+  }
+  function numCell(b, p, colMax, label) {
+    var v = val(b, p), n = b.n[p] || 0, s = step(v, colMax);
+    var td = el('td', {
+      class: 'num' + (n ? ' has-value' : ' empty') + (s >= 3 ? ' dark' : ''),
+      style: s >= 0 ? 'background:' + SEQ[s] : null, tabindex: n ? '0' : null, role: n ? 'button' : null,
+      'aria-label': n ? label + ', ' + periodLabel(p) + ', ' + fmtMoney.format(v) + ', ' + n + ' deals' : null
+    }, [n ? short(v) : '—', n ? el('span', { class: 'n' }, [n + (n === 1 ? ' deal' : ' deals')]) : null]);
+    if (n) activate(td, function (e) { e.stopPropagation(); openDrill(label, p, b.deals[p] || []); });
+    return td;
+  }
+  function yoyCell(b) {
+    var a = b.y[String(CUR_YEAR - 2)] || 0, c = b.y[String(CUR_YEAR - 1)] || 0;
+    var txt = !a && !c ? '' : !a ? 'new' : (Math.round((c / a - 1) * 100) > 0 ? '+' : '') + Math.round((c / a - 1) * 100) + '%';
+    return el('td', { class: 'yoy', title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, [txt]);
+  }
+  function sortVal(g) { return S.sortKey === 'name' ? geoName(g.key) : val(g.b, S.sortKey); }
+  function renderTable(agg) {
+    var table = document.getElementById('bkTable'); table.innerHTML = '';
+    var wrap = table.parentNode, old = wrap.querySelector('.empty-state'); if (old) old.remove();
+    document.getElementById('tableTitle').textContent = S.geo === 'us' ? 'By state and market' : 'International, by country and market';
+    var keys = Object.keys(agg.geo);
+    if (!keys.length) {
+      wrap.appendChild(el('div', { class: 'empty-state' }, [el('div', { class: 'glyph' }, [S.deals.length ? 'No matches' : 'No data yet']),
+        el('h2', {}, [S.deals.length ? 'Nothing booked for this filter' : 'The nightly HubSpot pull hasn’t run']), el('p', {}, [S.deals.length ? 'Try another market or bookings type.' : 'Once the scheduled job writes its first snapshot, data renders here.'])]));
+      return;
+    }
+    var firstYear = Math.max(CUR_YEAR - 7, agg.deals.reduce(function (m, d) { return Math.min(m, d.year); }, CUR_YEAR));
+
+    var thead = el('thead'), hr = el('tr');
+    function th(label, key, cls) {
+      var arrow = S.sortKey === key ? (S.sortDir > 0 ? '▲' : '▼') : '';
+      var h = el('th', { class: (cls || '') + ' sortable', tabindex: '0', 'aria-sort': S.sortKey === key ? (S.sortDir > 0 ? 'ascending' : 'descending') : 'none' },
+        [label, arrow ? el('span', { class: 'arrow' }, [arrow]) : null]);
+      activate(h, function () { if (S.sortKey === key) S.sortDir = -S.sortDir; else { S.sortKey = key; S.sortDir = key === 'name' ? 1 : -1; } renderTable(aggregate()); });
+      return h;
+    }
+    hr.appendChild(th(S.geo === 'us' ? 'State' : 'Country', 'name', 'l'));
+    PERIODS.forEach(function (p) { hr.appendChild(th(periodLabel(p), p)); });
+    hr.appendChild(el('th', { title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, ['YoY ' + String(CUR_YEAR - 1).slice(2)]));
+    hr.appendChild(el('th', { class: 'l' }, ['Trend ' + String(firstYear).slice(2) + '–' + String(CUR_YEAR).slice(2)]));
+    thead.appendChild(hr); table.appendChild(thead);
+
+    var colMax = {};
+    PERIODS.forEach(function (p) { colMax[p] = 0; keys.forEach(function (k) { colMax[p] = Math.max(colMax[p], val(agg.geo[k].b, p)); }); });
+
+    var groups = keys.map(function (k) { return agg.geo[k]; });
+    groups.sort(function (a, b) {
+      var x = sortVal(a), y = sortVal(b);
+      if (a.key === '??') return 1; if (b.key === '??') return -1;
+      return (x < y ? -1 : x > y ? 1 : 0) * S.sortDir;
+    });
+
+    var tbody = el('tbody');
+    groups.forEach(function (g) {
+      var name = geoName(g.key), isOpen = !!S.open[g.key];
+      var tr = el('tr', { class: 'state-row' + (isOpen ? ' open' : ''), 'data-key': g.key });
+      var nameTd = el('td', { class: 'name-cell', tabindex: '0', role: 'button', 'aria-expanded': String(isOpen) },
+        [el('span', { class: 'chev' }, ['▶']), name]);
+      activate(nameTd, function () { S.open[g.key] = !S.open[g.key]; render(); });
+      tr.appendChild(nameTd);
+      PERIODS.forEach(function (p) { tr.appendChild(numCell(g.b, p, colMax[p], name)); });
+      tr.appendChild(yoyCell(g.b));
+      tr.appendChild(el('td', { class: 'spark' }, [spark(g.b, firstYear)]));
+      tbody.appendChild(tr);
+      if (isOpen) {
+        MARKETS.filter(function (m) { return g.markets[m]; }).forEach(function (m) {
+          var mb = g.markets[m], mr = el('tr', { class: 'market-row' });
+          mr.appendChild(el('td', { class: 'name-cell' }, [m, CARVE_OUTS[m] ? el('span', { class: 'tag' }, ['carve-out']) : null]));
+          PERIODS.forEach(function (p) { mr.appendChild(numCell(mb, p, 0, name + ' · ' + m)); });
+          mr.appendChild(yoyCell(mb));
+          mr.appendChild(el('td', { class: 'spark' }, [spark(mb, firstYear)]));
+          tbody.appendChild(mr);
+        });
+      }
+    });
+    var tot = el('tr', { class: 'totals-row' });
+    tot.appendChild(el('td', { class: 'name-cell' }, ['Total']));
+    PERIODS.forEach(function (p) { tot.appendChild(numCell(agg.total, p, 0, 'Total')); });
+    tot.appendChild(yoyCell(agg.total));
+    tot.appendChild(el('td', { class: 'spark' }, [spark(agg.total, firstYear)]));
+    tbody.appendChild(tot);
+    table.appendChild(tbody);
+  }
+
+  // ---------- drill-down ----------
+  function openDrill(label, p, deals) {
+    document.getElementById('modalTitle').textContent = label + ' · ' + periodLabel(p);
+    var motion = S.motion === 'all' ? 'New logo + expansion' : (S.motion === 'new_logo' ? 'New logo' : 'Expansion');
+    var mkt = S.market === 'core' ? 'Core markets' : (S.market || 'All markets');
+    document.getElementById('modalMeta').textContent = motion + ' · ' + mkt;
+    var body = document.getElementById('modalBody'); body.innerHTML = '';
+    var sorted = deals.slice().sort(function (a, b) { return b.amount - a.amount; });
+    var total = 0;
+    sorted.forEach(function (d) {
+      total += d.amount;
+      body.appendChild(el('div', { class: 'deal-row' }, [
+        el('div', {}, [
+          el('div', { class: 'deal-name' }, [el('a', { href: HUBSPOT_DEAL_URL + d.id, target: '_blank', rel: 'noopener' }, [d.name])]),
+          el('div', { class: 'deal-sub' }, [d.company + ' · ' + d.market + ' · ' + (d.motion === 'new_logo' ? 'New logo' : 'Expansion') + ' · ' + d.owner])
+        ]),
+        el('div', { class: 'deal-date' }, [d.closeDate ? d.closeDate.toISOString().slice(0, 10) : '']),
+        el('div', { class: 'deal-amount' }, [fmtMoney.format(d.amount)])
+      ]));
+    });
+    document.getElementById('modalFoot').textContent = sorted.length + (sorted.length === 1 ? ' deal' : ' deals') + '  ·  ' + fmtMoney.format(total) + ' total';
+    document.getElementById('overlay').hidden = false;
+  }
+  function closeDrill() { document.getElementById('overlay').hidden = true; }
+  document.getElementById('modalClose').addEventListener('click', closeDrill);
+  document.getElementById('overlay').addEventListener('click', function (e) { if (e.target.id === 'overlay') closeDrill(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrill(); });
+
+  // ---------- controls ----------
+  function wireGroup(id, key) {
+    document.getElementById(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-v]'); if (!b) return;
+      Array.from(this.querySelectorAll('button')).forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active'); S[key] = b.getAttribute('data-v'); S.open = {}; render();
+    });
+  }
+  wireGroup('motionControl', 'motion');
+  wireGroup('geoControl', 'geo');
+  (function () {
+    var sel = document.getElementById('marketSelect');
+    [['', 'All markets'], ['core', 'Core only (excl. carve-outs)']].concat(MARKETS.map(function (m) { return [m, m + (CARVE_OUTS[m] ? ' (carve-out)' : '')]; }))
+      .forEach(function (o) { sel.appendChild(el('option', { value: o[0] }, [o[1]])); });
+    sel.addEventListener('change', function () { S.market = sel.value; render(); });
+  })();
+
+  function renderBadge() {
+    var badge = document.getElementById('refreshBadge'), t = document.getElementById('refreshText');
+    badge.className = 'refresh-badge';
+    if (!S.meta) { t.textContent = 'No refresh yet'; return; }
+    var ts = new Date(S.meta.timestamp), age = (Date.now() - ts.getTime()) / 3600000;
+    var stamp = ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    if (S.meta.status === 'failed') { badge.className = 'refresh-badge failed'; t.textContent = 'Last pull failed. Showing data as of ' + stamp; }
+    else if (age > 36) { badge.className = 'refresh-badge stale'; t.textContent = 'Stale. Data as of ' + stamp; }
+    else t.textContent = 'Data as of ' + stamp;
+  }
+
+  function render() {
+    var agg = aggregate();
+    renderKpis(agg);
+    renderPeriodControl();
+    renderMap(agg);
+    renderTable(agg);
+  }
+
+  async function loadData() {
+    var rows = [], from = 0, size = 1000;
+    while (true) {
+      var res = await sb.from('bookings_deals').select('*').order('hubspot_deal_id').range(from, from + size - 1);
+      if (res.error) throw new Error(res.error.message);
+      rows = rows.concat(res.data || []);
+      if (!res.data || res.data.length < size) break;
+      from += size;
+    }
+    S.deals = rows.map(rowToDeal);
+    var meta = await sb.from('bookings_meta').select('payload').eq('key', 'last_refresh').maybeSingle();
+    if (meta.error) throw new Error(meta.error.message);
+    S.meta = meta.data ? meta.data.payload : null;
+  }
+
+  document.getElementById('signInBtn').addEventListener('click', async function () {
+    var res = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    if (res.error) { var e = document.getElementById('gateErr'); e.hidden = false; e.textContent = res.error.message; }
+  });
+  document.getElementById('signOutBtn').addEventListener('click', function () { sb.auth.signOut(); });
+
+  var booted = false;
+  async function boot(session) {
+    if (!session) { document.getElementById('gate').hidden = false; document.getElementById('app').hidden = true; booted = false; return; }
+    if (booted) return;
+    booted = true;
+    document.getElementById('gate').hidden = true; document.getElementById('app').hidden = false;
+    try { await loadData(); renderBadge(); render(); }
+    catch (err) {
+      var t = document.getElementById('bkTable');
+      t.parentNode.appendChild(el('div', { class: 'empty-state' }, [el('div', { class: 'glyph' }, ['Error']), el('h2', {}, ['Could not load data']), el('p', {}, [err && err.message ? err.message : String(err)])]));
+    }
+  }
+  sb.auth.onAuthStateChange(function (_e, session) { boot(session); });
+})();
+</script>

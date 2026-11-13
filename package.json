@@ -6,7 +6,8 @@
   "description": "Daily HubSpot pull for the VETRO Account Heatmap, run via GitHub Actions.",
   "scripts": {
     "pull": "node pull-hubspot.mjs",
-    "pull:matrix": "node pull-hubspot-matrix.mjs"
+    "pull:matrix": "node pull-hubspot-matrix.mjs",
+    "pull:bookings": "node pull-hubspot-bookings.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4"
