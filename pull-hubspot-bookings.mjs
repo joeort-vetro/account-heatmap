@@ -3,7 +3,7 @@
 // with the associated company's state, country and market, then writes
 // bookings_meta.last_refresh (status ok|failed).
 //
-// Built for Chris Lindenau's 2026-11-13 ask: historical bookings by state, then
+// Built for the CEO's 2026-11-13 ask: historical bookings by state, then by market,
 // by market, as the "reality" half of 2027 regional quota setting.
 //
 // Bookings definitions (one row per deal):
@@ -41,24 +41,24 @@ const NB_PIPE = "default", NB_WON = "closedwon";
 const EXP_PIPE = "732680197", EXP_WON = "1067329317";
 const REN_PIPE = "5452187", REN_WON = "5452193";
 
-// Company sub-vertical (internal value) -> market row on the page.
-const MARKET = {
-  "Tier 1": "ISP Tier 1", "ISP Tier 1": "ISP Tier 1",
-  "Tier 2": "ISP Tier 2", "ISP Tier 2": "ISP Tier 2",
-  "Tier 3": "ISP Tier 3", "ISP Tier 3": "ISP Tier 3",
-  "Tier 4": "ISP Tier 4", "ISP Tier 4": "ISP Tier 4",
-  "Middle Mile/Transport": "Dark Fiber / Middle Mile", "Dark Fiber/Middle Mile/Transport": "Dark Fiber / Middle Mile",
-  "Dark Fiber": "Dark Fiber / Middle Mile", "OAN": "Dark Fiber / Middle Mile",
-  "Coop ISP": "Co-ops", "Small Coop": "Co-ops", "Medium Coop": "Co-ops", "Large Coop": "Co-ops", "Utility - Small": "Co-ops",
-  "Eng - Local/Boutique": "Engineering Firms", "Eng - National/Regional": "Engineering Firms", "Eng - Small/Medium": "Engineering Firms",
-  "PM/Consultant": "Engineering Firms", "EPC": "Engineering Firms", "Engineering Firm": "Engineering Firms",
-  "Local Government - Small": "Government / SLED", "Local Government - Large": "Government / SLED",
-  "State Broadband Office": "Government / SLED", "DOT": "Government / SLED", "Other State Government": "Government / SLED",
-  "Native American/First Nations": "Government / SLED", "Tribal Government/First Nations": "Government / SLED",
-  "Federal Government": "Government / SLED", "Education": "Government / SLED", "Education - University": "Government / SLED",
-  "Large Education": "Government / SLED", "Local/Regional Government": "Government / SLED",
-};
-const marketFor = (sv) => MARKET[(sv || "").trim()] || "Other";
+// Market = the 2027 "Updated Sub-Vertical" segment model (Michaela's TAM build).
+// Fallback: legacy HubSpot sub-vertical crosswalked per the TAM file's
+// "Sub-Vertical Crosswalk" tab. segment_overrides (Supabase, loaded from the
+// TAM file) holds the companies where the file's segment differs from that
+// crosswalk (mostly ISP re-tiering by annual revenue) and wins when present.
+// When the new segments are imported into HubSpot, read that property instead.
+function fallbackSegment(sv) {
+  sv = (sv || "").trim();
+  if (!sv) return "Not Mapped";
+  if (["Tier 1", "ISP Tier 1"].includes(sv)) return "ISP Tier 1";
+  if (["Tier 2", "Tier 3", "ISP Tier 2", "ISP Tier 3"].includes(sv)) return "ISP Tier 2/3";
+  if (["Tier 4", "ISP Tier 4"].includes(sv)) return "ISP Tier 4";
+  if (["Coop ISP", "Small Coop", "Medium Coop", "Large Coop"].includes(sv)) return "Co-op";
+  if (["Middle Mile/Transport", "Dark Fiber/Middle Mile/Transport", "Dark Fiber", "OAN"].includes(sv)) return "Core infrastructure";
+  if (["Local Government - Small", "Local Government - Large", "Other State Government", "DOT"].includes(sv)) return "Government";
+  if (sv.startsWith("Eng - ") || ["PM/Consultant", "EPC", "Engineering Firm"].includes(sv)) return "Engineering Firm";
+  return "Other";
+}
 
 const US = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado", CT: "Connecticut",
@@ -173,9 +173,24 @@ async function main() {
     }
     log(`companies_loaded (${cids.length})`);
 
-    const ownersResp = await hs("/crm/v3/owners?limit=500");
-    const owners = {};
-    for (const o of ownersResp.results ?? []) owners[o.id] = [o.firstName, o.lastName].filter(Boolean).join(" ") || "Unassigned";
+    const owners = {}, ownerActive = {};
+    for (const archived of [false, true]) {
+      const resp = await hs(`/crm/v3/owners?limit=500&archived=${archived}`);
+      for (const o of resp.results ?? []) {
+        owners[o.id] = [o.firstName, o.lastName].filter(Boolean).join(" ") || "Unassigned";
+        ownerActive[o.id] = !archived;
+      }
+    }
+
+    const overrides = {};
+    if (!DRY_RUN) {
+      const { data, error } = await supabase.from("segment_overrides").select("company_id,segment").limit(20000);
+      if (error) throw new Error(`read segment_overrides failed: ${error.message}`);
+      for (const r of data ?? []) overrides[r.company_id] = r.segment;
+    } else if (process.env.OVERRIDES_JSON) {
+      const fs = await import("node:fs");
+      Object.assign(overrides, JSON.parse(fs.readFileSync(process.env.OVERRIDES_JSON, "utf8")));
+    }
 
     const rows = kept.map(({ d, motion, amount }) => {
       const p = d.properties;
@@ -197,9 +212,10 @@ async function main() {
         is_us: us,
         state_code: us ? code : null,
         country: (c.country || "").trim() || (us ? "United States" : null),
-        market: marketFor(c.sub_vertical__proposed_),
+        market: (cid && overrides[cid]) || fallbackSegment(c.sub_vertical__proposed_),
         sub_vertical: c.sub_vertical__proposed_ || null,
         owner_name: p.hubspot_owner_id ? owners[p.hubspot_owner_id] || "Unassigned" : "Unassigned",
+        owner_active: p.hubspot_owner_id ? ownerActive[p.hubspot_owner_id] ?? null : null,
         last_refreshed: startedAt,
       };
     });

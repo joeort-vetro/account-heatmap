@@ -1,36 +1,39 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VETRO Bookings by State</title>
+<title>VETRO Bookings and TAM by State</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   :root {
     --bg: #f4f7f6; --surface: #ffffff; --surface-alt: #eaf1ef; --border: #d6e0dd;
-    --ink: #16222b; --ink-secondary: #55636a; --ink-faint: #8b979a;
+    --ink: #16222b; --ink-secondary: #55636a; --ink-faint: #687579;
     --accent: #157a6d; --accent-strong: #0f5c52; --accent-tint: #d7ece8; --accent-2: #2f6fa8;
     --warning: #c74a1a; --warning-tint: #fbe6da;
     --seq-0: #eef3f2; --seq-1: #cbe3de; --seq-2: #9fcdc4; --seq-3: #6bb2a5; --seq-4: #368f80; --seq-5: #146357;
+    --opp-1: #d9e6f2; --opp-2: #b3cde6; --opp-3: #7faad3; --opp-4: #4f86bd; --opp-5: #2b5f93;
     --on-seq-dark: #ffffff;
     --shadow: 0 1px 2px rgba(15, 40, 35, 0.06), 0 8px 24px rgba(15, 40, 35, 0.06);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0e1714; --surface: #131f1c; --surface-alt: #182823; --border: #23362f;
-      --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #718780;
+      --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #85998f;
       --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
       --warning: #ff8a52; --warning-tint: #3a2418;
       --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
+      --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #3a6f9f; --opp-5: #6fa9dd;
       --on-seq-dark: #06110e;
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
     }
   }
   :root[data-theme="dark"] {
     --bg: #0e1714; --surface: #131f1c; --surface-alt: #182823; --border: #23362f;
-    --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #718780;
+    --ink: #e9f2ef; --ink-secondary: #a6b8b2; --ink-faint: #85998f;
     --accent: #33c2ab; --accent-strong: #4fe0c6; --accent-tint: #1c3833; --accent-2: #6fa9dd;
     --warning: #ff8a52; --warning-tint: #3a2418;
     --seq-0: #182823; --seq-1: #1c352f; --seq-2: #204a40; --seq-3: #256355; --seq-4: #2b8571; --seq-5: #33c2ab;
+    --opp-1: #1a2a3a; --opp-2: #1f3a55; --opp-3: #285074; --opp-4: #3a6f9f; --opp-5: #6fa9dd;
     --on-seq-dark: #06110e;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
@@ -38,9 +41,8 @@
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', system-ui, sans-serif;
     padding: 32px clamp(16px, 4vw, 48px) 64px; margin: 0; }
-  .wrap { max-width: 1180px; margin: 0 auto; }
+  .wrap { max-width: 1320px; margin: 0 auto; }
   [hidden] { display: none !important; }
-  .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
 
   .gate { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 16px; text-align: center; }
   .gate h1 { font-family: 'Fraunces', Georgia, serif; font-size: 26px; margin: 0; }
@@ -51,7 +53,7 @@
   header.page { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 22px; }
   h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; letter-spacing: -0.01em; margin: 0 0 4px; text-wrap: balance; }
   h2.section { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 19px; margin: 0; }
-  .subtitle { color: var(--ink-secondary); font-size: 14px; margin: 0; max-width: 640px; }
+  .subtitle { color: var(--ink-secondary); font-size: 14px; margin: 0; max-width: 680px; }
   .refresh-badge { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-secondary); background: var(--surface);
     border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
   .refresh-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
@@ -59,19 +61,37 @@
   .refresh-badge.stale .dot, .refresh-badge.failed .dot { background: var(--warning); }
 
   .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
-  .control-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 2px; }
+  .control-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 2px; flex-wrap: wrap; }
   .control-group button { font: 500 13px 'IBM Plex Sans', sans-serif; color: var(--ink-secondary); background: transparent; border: none;
     border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: background .12s ease, color .12s ease; }
   .control-group button:hover { color: var(--ink); }
   .control-group button.active { background: var(--accent); color: #fff; }
-  select.sel { font: 500 13px 'IBM Plex Sans', sans-serif; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
-    border-radius: 9px; padding: 9px 34px 9px 13px; cursor: pointer; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2355636a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 13px center; }
-  .sign-out { margin-left: auto; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-secondary); cursor: pointer; }
+  .btn { font: 500 13px 'IBM Plex Sans', sans-serif; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-strong); }
+  .sign-out { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-secondary); cursor: pointer; }
+  .spacer { margin-left: auto; }
 
-  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+  /* Multi-select market dropdown */
+  .ms { position: relative; }
+  .ms-btn { min-width: 230px; justify-content: space-between; }
+  .ms-btn .caret { color: var(--ink-faint); font-size: 10px; }
+  .ms-panel { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 290px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow); padding: 10px; }
+  .ms-presets { display: flex; gap: 6px; flex-wrap: wrap; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .ms-presets button { font: 500 12px 'IBM Plex Sans', sans-serif; border: 1px solid var(--border); background: var(--surface-alt); color: var(--ink);
+    border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+  .ms-presets button:hover { border-color: var(--accent); }
+  .ms-opt { display: flex; align-items: center; gap: 9px; padding: 6px 4px; font-size: 13px; cursor: pointer; border-radius: 6px; }
+  .ms-opt:hover { background: var(--surface-alt); }
+  .ms-opt input { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
+  .ms-group { font: 500 10.5px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); padding: 8px 4px 2px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
   .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi.opp { border-color: var(--opp-3); }
   .kpi .label { font: 500 11.5px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-secondary); }
   .kpi .value { font: 600 24px 'IBM Plex Mono', monospace; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
   .kpi .sub { font-size: 12px; color: var(--ink-secondary); }
@@ -81,12 +101,10 @@
   .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px 0; }
   .card-note { font-size: 12.5px; color: var(--ink-secondary); }
 
-  /* Tile-grid map */
   .map-wrap { padding: 16px 20px 8px; }
   .tilemap { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; max-width: 760px; margin: 0 auto; }
   .tile { aspect-ratio: 1 / 0.82; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-family: 'IBM Plex Mono', monospace; background: var(--seq-0); color: var(--ink); cursor: default; position: relative;
-    border: 1px solid transparent; transition: outline .1s ease; min-width: 0; }
+    font-family: 'IBM Plex Mono', monospace; background: var(--seq-0); color: var(--ink); cursor: default; border: 1px solid transparent; min-width: 0; }
   .tile .st { font-size: 12px; font-weight: 600; line-height: 1; }
   .tile .amt { font-size: 10px; opacity: .85; margin-top: 3px; line-height: 1; white-space: nowrap; }
   .tile.has-value { cursor: pointer; }
@@ -99,21 +117,25 @@
   .legend .ramp span { width: 16px; height: 10px; border-radius: 2px; }
 
   .tip { position: fixed; z-index: 60; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    box-shadow: var(--shadow); padding: 10px 12px; font-size: 12.5px; min-width: 190px; }
+    box-shadow: var(--shadow); padding: 10px 12px; font-size: 12.5px; min-width: 210px; }
   .tip .t { font-weight: 600; margin-bottom: 6px; }
   .tip .r { display: flex; justify-content: space-between; gap: 16px; font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--ink-secondary); }
   .tip .r b { color: var(--ink); font-weight: 600; }
+  .tip .sep { border-top: 1px solid var(--border); margin: 6px 0; }
 
-  /* Table */
   .table-scroll { overflow-x: auto; }
-  table.bk { border-collapse: collapse; width: 100%; min-width: 820px; font-variant-numeric: tabular-nums; }
+  table.bk { border-collapse: collapse; width: 100%; min-width: 1240px; font-variant-numeric: tabular-nums; }
   table.bk th, table.bk td { border-bottom: 1px solid var(--border); padding: 0; }
-  table.bk thead th { font: 500 11.5px 'IBM Plex Mono', monospace; color: var(--ink-secondary); text-transform: uppercase; letter-spacing: .04em;
-    padding: 12px 10px; text-align: right; background: var(--surface-alt); white-space: nowrap; position: sticky; top: 0; }
+  table.bk thead th { font: 500 11px 'IBM Plex Mono', monospace; color: var(--ink-secondary); text-transform: uppercase; letter-spacing: .04em;
+    padding: 10px 8px; text-align: right; background: var(--surface-alt); white-space: nowrap; }
+  table.bk thead tr.groups th { text-align: center; color: var(--ink); font-weight: 600; letter-spacing: .06em; padding: 8px; }
+  table.bk thead tr.groups th.g-book { border-bottom: 2px solid var(--seq-4); }
+  table.bk thead tr.groups th.g-opp { border-bottom: 2px solid var(--opp-4); }
   table.bk thead th.l { text-align: left; padding-left: 16px; }
   table.bk thead th.sortable { cursor: pointer; }
   table.bk thead th.sortable:hover { color: var(--ink); }
   table.bk thead th .arrow { opacity: .55; margin-left: 3px; }
+  table.bk .divider { border-left: 2px solid var(--border); }
   .name-cell { text-align: left; padding: 9px 12px 9px 16px; white-space: nowrap; font-size: 13.5px; }
   tr.state-row .name-cell { font-weight: 600; cursor: pointer; }
   tr.state-row .name-cell .chev { display: inline-block; width: 14px; color: var(--ink-faint); transition: transform .12s ease; font-size: 11px; }
@@ -122,17 +144,23 @@
   tr.market-row td { background: var(--surface-alt); }
   .tag { font: 500 10px 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint);
     border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 8px; vertical-align: 1px; }
-  td.num { text-align: right; padding: 8px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-width: 104px; }
+  .tag.former { color: var(--warning); border-color: var(--warning); }
+  td.num { text-align: right; padding: 8px 9px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; min-width: 92px; }
   td.num .n { display: block; font-size: 10.5px; color: var(--ink-secondary); margin-top: 1px; }
   td.num.has-value { cursor: pointer; }
   td.num.has-value:hover, td.num.has-value:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -2px; }
   td.num.empty { color: var(--ink-faint); }
   td.num.dark { color: var(--on-seq-dark); }
   td.num.dark .n { color: var(--on-seq-dark); opacity: .8; }
-  td.spark { padding: 6px 16px 6px 10px; width: 132px; }
+  td.num.plain { min-width: 76px; }
+  td.spark { padding: 6px 12px 6px 8px; width: 120px; }
   td.spark svg { display: block; }
   tr.totals-row td, tr.totals-row .name-cell { font-weight: 600; background: var(--surface-alt); border-top: 2px solid var(--border); }
-  td.yoy { text-align: right; padding: 8px 10px; font: 500 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
+  td.yoy { text-align: right; padding: 8px 9px; font: 500 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); white-space: nowrap; }
+
+  .rep-controls { display: flex; gap: 10px; align-items: center; }
+  .check { display: inline-flex; gap: 7px; align-items: center; font-size: 13px; color: var(--ink-secondary); cursor: pointer; }
+  .check input { accent-color: var(--accent); }
 
   .notes { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.55; padding: 4px 20px 18px; }
   .notes ul { margin: 8px 0 0; padding-left: 18px; }
@@ -160,8 +188,8 @@
   .deal-amount { font: 600 13px 'IBM Plex Mono', monospace; text-align: right; }
   .modal-foot { padding: 12px 22px; border-top: 1px solid var(--border); background: var(--surface-alt); font: 12px 'IBM Plex Mono', monospace; color: var(--ink-secondary); }
 
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 760px) {
-    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .tile .amt { display: none; }
     .tile .st { font-size: 10px; }
     .tilemap { gap: 2px; }
@@ -170,7 +198,7 @@
 </style>
 
 <div class="gate" id="gate">
-  <h1>VETRO Bookings by State</h1>
+  <h1>VETRO Bookings and TAM by State</h1>
   <p>Sign in with your @vetrofibermap.com Google account to continue.</p>
   <button id="signInBtn">Sign in with Google</button>
   <div class="err" id="gateErr" hidden></div>
@@ -179,8 +207,8 @@
 <div class="wrap" id="app" hidden>
   <header class="page">
     <div>
-      <h1>Bookings by State</h1>
-      <p class="subtitle">Closed-won bookings by HQ state, then market. The historical half of 2027 regional quota setting. HubSpot-sourced, refreshed nightly.</p>
+      <h1>Bookings and TAM by State</h1>
+      <p class="subtitle">What VETRO has booked by HQ state and market, next to the remaining opportunity in each. The reality case for 2027 regional quotas. Bookings refresh nightly from HubSpot; TAM is Michaela's 2027 TAM model.</p>
     </div>
     <div id="refreshBadge" class="refresh-badge"><span class="dot"></span><span id="refreshText">Loading&hellip;</span></div>
   </header>
@@ -195,7 +223,12 @@
       <button data-v="us" class="active">US states</button>
       <button data-v="intl">International</button>
     </div>
-    <select id="marketSelect" class="sel" aria-label="Market"></select>
+    <div class="ms" id="ms">
+      <button class="btn ms-btn" id="msBtn" aria-haspopup="true" aria-expanded="false"><span id="msLabel">All markets</span><span class="caret">▼</span></button>
+      <div class="ms-panel" id="msPanel" hidden></div>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn primary" id="exportBtn" title="Every state and market, both bookings types, plus TAM and reps. Ignores the filters above.">Export to Excel</button>
     <button class="sign-out" id="signOutBtn">Sign out</button>
   </div>
 
@@ -203,15 +236,15 @@
 
   <div class="card" id="mapCard">
     <div class="card-head">
-      <h2 class="section">Where bookings land</h2>
-      <div class="control-group" id="periodControl" role="group" aria-label="Map period"></div>
+      <h2 class="section" id="mapTitle">Where bookings land</h2>
+      <div class="control-group" id="periodControl" role="group" aria-label="Map metric"></div>
     </div>
     <div class="map-wrap"><div class="tilemap" id="tilemap"></div></div>
     <div class="legend">
-      <span>Shade = bookings $ for the selected period</span>
-      <span class="ramp"><span style="background:var(--seq-1)"></span><span style="background:var(--seq-2)"></span><span style="background:var(--seq-3)"></span><span style="background:var(--seq-4)"></span><span style="background:var(--seq-5)"></span></span>
+      <span id="legendText">Shade = bookings $ for the selected period</span>
+      <span class="ramp" id="legendRamp"></span>
       <span>low &rarr; high</span>
-      <span style="margin-left:12px">Dashed = no bookings</span>
+      <span style="margin-left:12px">Dashed = none</span>
       <span style="margin-left:auto">Click a state to open its markets below</span>
     </div>
   </div>
@@ -219,21 +252,34 @@
   <div class="card">
     <div class="card-head" style="padding-bottom:12px">
       <h2 class="section" id="tableTitle">By state and market</h2>
-      <span class="card-note">Click a row to expand markets. Click any number for the deals behind it.</span>
+      <span class="card-note">Click a row to expand markets. Click any bookings number for the deals behind it.</span>
     </div>
     <div class="table-scroll"><table class="bk" id="bkTable"></table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head" style="padding-bottom:12px">
+      <h2 class="section" id="repTitle">Rep performance, new logo</h2>
+      <div class="rep-controls">
+        <label class="check"><input type="checkbox" id="activeOnly"> Current reps only</label>
+      </div>
+    </div>
+    <div class="table-scroll"><table class="bk" id="repTable" style="min-width:900px"></table></div>
+    <div class="notes" style="padding-top:12px">Rep = the deal's HubSpot owner today. Reassigned deals follow the current owner. Follows the bookings type, geography and market filters above. "Former" = owner deactivated in HubSpot.</div>
   </div>
 
   <div class="card">
     <div class="notes">
       <b>How this is counted</b>
       <ul>
-        <li><b>New logo</b> = New Business pipeline, Closed Won, deal Amount (ARR).</li>
-        <li><b>Expansion</b> = Expansion pipeline Upsell deals, plus pre-2025 mid-contract upsells booked in the Renewal pipeline (net recurring change). Mid-contract downgrades are excluded, so this is gross upsell. The Expansion pipeline starts in 2025, so pre-2025 expansion depends on how those renewal deals were logged.</li>
+        <li><b>New logo</b> = New Business pipeline, Closed Won, deal Amount (ARR). Ties to the TAM model's "New Biz Deals (HS)" tab deal for deal (1/1/2024 to 10/15/2026: 148 of 148, same amounts). One extra here: "Zayo Group - 2024 - SOW (Phase I POC)", $30K, which the model excludes as non-recurring.</li>
+        <li><b>Expansion</b> = Expansion pipeline Upsell deals, plus pre-2025 mid-contract upsells booked in the Renewal pipeline (net recurring change). Mid-contract downgrades are excluded, so this is gross upsell. The Expansion pipeline starts in 2025.</li>
         <li><b>Excluded:</b> renewals, price-increase escalators, non-recurring-only and partner pipelines, deals with no close date, and closed-won deals dated in the future (pre-booked out-years of multi-year contracts).</li>
-        <li><b>State</b> = the deal's primary company HQ state in HubSpot. A multi-state operator's full deal lands in its HQ state, not its service footprint.</li>
-        <li><b>Market</b> = the company's current HubSpot Sub-Vertical. Segments are being re-mapped to the new 2027 segment model; markets here will shift when that import lands.</li>
-        <li><b>Carve-outs</b> (tagged) = Co-ops, Engineering Firms, Government / SLED. International is its own view.</li>
+        <li><b>State</b> = the deal's or account's primary company HQ state. A multi-state operator lands entirely in its HQ state, not its service footprint.</li>
+        <li><b>Market</b> = the 2027 Updated Sub-Vertical from the TAM model. Bookings companies use the model's classification; companies outside it are mapped from their HubSpot sub-vertical with the model's crosswalk.</li>
+        <li><b>Carve-outs</b> (tagged) = Co-op, Engineering Firm, Government. International is its own view; TAM covers US and Canada only.</li>
+        <li><b>TAM accounts</b> = all companies in the model. <b>Customers</b> = lifecycle Customer. <b>Prospects</b> = TAM less customers. <b>SAM</b> = prospects after the model's fiber and mapping screens. <b>SOM</b> = SAM after the fiber share, BDC, network-ownership and government-population screens. <b>SOM $</b> = SOM accounts × the segment's average initial new-logo ARR (the model's method). <b>Penetration</b> = customers ÷ TAM accounts.</li>
+        <li>TAM is a snapshot of the model's "Updated TAM (CRM)" tab as of 2026-10-15; it does not refresh nightly. Totals tie to the model's TAM Summary (US: 12,264 TAM, 285 customers, 8,054 SAM, 5,743 SOM, $185.4M SOM $).</li>
         <li><b>2026 YTD</b> runs through today. The YTD tile compares against 2025 through the same calendar date.</li>
       </ul>
     </div>
@@ -254,14 +300,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function () {
   'use strict';
 
-  // Reads bookings_deals / bookings_meta (written nightly by
-  // pull-hubspot-bookings.mjs) from the same Supabase project and behind the
-  // same @vetrofibermap.com Google sign-in as index.html and matrix.html.
-  // Every number on the page is summed client-side from the same deal rows the
+  // Reads bookings_deals / bookings_meta (nightly pull-hubspot-bookings.mjs) and
+  // tam_state_market (loaded from the 2027 TAM model) from the same Supabase
+  // project, behind the same @vetrofibermap.com Google sign-in as index.html.
+  // Every bookings number is summed client-side from the same deal rows the
   // drill-down lists, so a clicked number always matches its deal list.
 
   var SUPABASE_URL = "https://koigqgfrmhitdmobtvpi.supabase.co";
@@ -275,8 +322,21 @@
   var PERIODS = YEARS.map(String).concat(['all']);
   var periodLabel = function (p) { return p === 'all' ? 'All-time' : (+p === CUR_YEAR ? p + ' YTD' : p); };
 
-  var MARKETS = ['ISP Tier 1', 'ISP Tier 2', 'ISP Tier 3', 'ISP Tier 4', 'Dark Fiber / Middle Mile', 'Other', 'Co-ops', 'Engineering Firms', 'Government / SLED'];
-  var CARVE_OUTS = { 'Co-ops': 1, 'Engineering Firms': 1, 'Government / SLED': 1 };
+  var CORE = ['ISP Tier 1', 'ISP Tier 2/3', 'ISP Tier 4', 'Core infrastructure'];
+  var CARVE = ['Co-op', 'Engineering Firm', 'Government'];
+  var UNSCOPED = ['Other', 'Not Mapped'];
+  var MARKETS = CORE.concat(CARVE, UNSCOPED);
+  var CARVE_OUTS = { 'Co-op': 1, 'Engineering Firm': 1, 'Government': 1 };
+
+  var TAM_COLS = [
+    { k: 'tam', label: 'TAM accts', title: 'All companies in the TAM model' },
+    { k: 'cust', label: 'Customers', title: 'Lifecycle = Customer' },
+    { k: 'prosp', label: 'Prospects', title: 'TAM accounts that are not customers' },
+    { k: 'sam', label: 'SAM', title: 'Prospects after fiber and mapping screens' },
+    { k: 'som', label: 'SOM accts', title: 'SAM after fiber share, BDC, ownership and population screens' },
+    { k: 'somv', label: 'SOM $', title: 'SOM accounts × segment avg initial new-logo ARR', money: true },
+    { k: 'pen', label: 'Penetr.', title: 'Customers ÷ TAM accounts', pct: true }
+  ];
 
   var STATES = {
     AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware',
@@ -286,9 +346,8 @@
     NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon',
     PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah',
     VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', PR: 'Puerto Rico',
-    GU: 'Guam', VI: 'U.S. Virgin Islands'
+    GU: 'Guam', VI: 'U.S. Virgin Islands', AS: 'American Samoa'
   };
-  // [col, row] on a 12-column tile grid.
   var TILES = {
     AK: [0, 0], ME: [11, 0],
     WI: [6, 1], VT: [10, 1], NH: [11, 1],
@@ -300,10 +359,15 @@
     HI: [0, 7], TX: [4, 7], FL: [9, 7], PR: [11, 7]
   };
   var SEQ = ['var(--seq-1)', 'var(--seq-2)', 'var(--seq-3)', 'var(--seq-4)', 'var(--seq-5)'];
+  var OPP = ['var(--opp-1)', 'var(--opp-2)', 'var(--opp-3)', 'var(--opp-4)', 'var(--opp-5)'];
 
-  var S = { deals: [], meta: null, motion: 'new_logo', geo: 'us', market: '', period: 'all', sortKey: 'name', sortDir: 1, open: {} };
+  var S = {
+    deals: [], tam: [], meta: null, motion: 'new_logo', geo: 'us', markets: MARKETS.slice(),
+    period: 'all', sortKey: 'name', sortDir: 1, open: {}, repSortKey: String(CUR_YEAR - 1), repSortDir: -1, activeOnly: false
+  };
 
   var fmtMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  var fmtInt = new Intl.NumberFormat('en-US');
   function short(n) {
     var a = Math.abs(n), s = n < 0 ? '-' : '';
     if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, '') + 'M';
@@ -319,33 +383,34 @@
     (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
     return e;
   }
-  function activate(btn, cb) {
-    btn.addEventListener('click', cb);
-    btn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cb(e); } });
+  function activate(node, cb) {
+    node.addEventListener('click', cb);
+    node.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cb(e); } });
   }
+  function marketOn(m) { return S.markets.indexOf(m) !== -1; }
 
-  // ---------- data ----------
+  // ---------- data shaping ----------
   function rowToDeal(r) {
-    var cd = r.close_date ? new Date(r.close_date) : null;
     return {
       id: r.hubspot_deal_id, name: r.deal_name, company: r.company_name || '(no company)', motion: r.motion,
-      amount: Number(r.amount) || 0, closeDate: cd, year: r.close_year, isUS: !!r.is_us, state: r.state_code,
-      country: r.country || 'Unknown', market: r.market || 'Other', subVertical: r.sub_vertical, owner: r.owner_name || 'Unassigned'
+      amount: Number(r.amount) || 0, closeDate: r.close_date ? new Date(r.close_date) : null, year: r.close_year,
+      isUS: !!r.is_us, state: r.state_code, country: r.country || 'Unknown', market: r.market || 'Other',
+      owner: r.owner_name || 'Unassigned', ownerActive: r.owner_active
     };
   }
-  function geoKey(d) {
-    if (S.geo === 'us') return d.isUS ? (d.state || '??') : null;
-    return d.isUS ? null : d.country;
+  function rowToTam(r) {
+    return {
+      isUS: !!r.is_us, state: r.state_code, country: r.country || 'Unknown', market: r.market,
+      tam: r.tam_accounts, cust: r.customers, prosp: r.prospects, sam: r.sam_accounts, som: r.som_accounts, somv: Number(r.som_value) || 0
+    };
   }
-  function geoName(k) {
-    if (S.geo === 'us') return k === '??' ? 'State not set' : (STATES[k] || k);
+  function geoKeyOf(isUS, state, country, geo) {
+    if (geo === 'us') return isUS ? (state || '??') : null;
+    return isUS ? null : country;
+  }
+  function geoName(k, geo) {
+    if ((geo || S.geo) === 'us') return k === '??' ? 'State not set' : (STATES[k] || k);
     return k;
-  }
-  function inScope(d) {
-    if (S.motion !== 'all' && d.motion !== S.motion) return false;
-    if (S.market === 'core' && CARVE_OUTS[d.market]) return false;
-    if (S.market && S.market !== 'core' && d.market !== S.market) return false;
-    return geoKey(d) !== null;
   }
   function bucket() { return { y: {}, all: 0, n: { all: 0 }, deals: { all: [] } }; }
   function add(b, d) {
@@ -353,89 +418,121 @@
     b.y[y] = (b.y[y] || 0) + d.amount; b.n[y] = (b.n[y] || 0) + 1; (b.deals[y] = b.deals[y] || []).push(d);
     b.all += d.amount; b.n.all += 1; b.deals.all.push(d);
   }
+  function tamBucket() { return { tam: 0, cust: 0, prosp: 0, sam: 0, som: 0, somv: 0 }; }
+  function addTam(t, r) { ['tam', 'cust', 'prosp', 'sam', 'som', 'somv'].forEach(function (k) { t[k] += r[k]; }); }
+  function tamVal(t, k) { if (!t) return 0; return k === 'pen' ? (t.tam ? t.cust / t.tam : 0) : t[k]; }
   function val(b, p) { return p === 'all' ? b.all : (b.y[p] || 0); }
-  function aggregate() {
-    var deals = S.deals.filter(inScope);
-    var geo = {}, total = bucket();
-    deals.forEach(function (d) {
-      var k = geoKey(d);
-      var g = geo[k] || (geo[k] = { key: k, b: bucket(), markets: {} });
-      add(g.b, d);
-      add(g.markets[d.market] || (g.markets[d.market] = bucket()), d);
-      add(total, d);
+
+  // Builds geo -> {b (bookings), t (tam), markets: {m: {b, t}}} for given filters.
+  function aggregate(opts) {
+    var geo = opts.geo, motion = opts.motion, markets = opts.markets;
+    var on = function (m) { return markets.indexOf(m) !== -1; };
+    var out = {}, total = { b: bucket(), t: tamBucket() }, deals = [];
+    function g(k) { return out[k] || (out[k] = { key: k, b: bucket(), t: tamBucket(), markets: {} }); }
+    function gm(G, m) { return G.markets[m] || (G.markets[m] = { b: bucket(), t: tamBucket() }); }
+    S.deals.forEach(function (d) {
+      if (motion !== 'all' && d.motion !== motion) return;
+      if (!on(d.market)) return;
+      var k = geoKeyOf(d.isUS, d.state, d.country, geo); if (k === null) return;
+      var G = g(k); add(G.b, d); add(gm(G, d.market).b, d); add(total.b, d); deals.push(d);
     });
-    return { geo: geo, total: total, deals: deals };
+    S.tam.forEach(function (r) {
+      if (!on(r.market)) return;
+      var k = geoKeyOf(r.isUS, r.state, r.country, geo); if (k === null) return;
+      var G = g(k); addTam(G.t, r); addTam(gm(G, r.market).t, r); addTam(total.t, r);
+    });
+    return { geo: out, total: total, deals: deals };
   }
+  function current() { return aggregate({ geo: S.geo, motion: S.motion, markets: S.markets }); }
 
   // ---------- KPIs ----------
   function renderKpis(agg) {
     var box = document.getElementById('kpis'); box.innerHTML = '';
     var md = [NOW.getMonth(), NOW.getDate()];
-    var prevSamePeriod = agg.deals.filter(function (d) {
+    var prevSame = agg.deals.filter(function (d) {
       if (d.year !== CUR_YEAR - 1 || !d.closeDate) return false;
       var m = d.closeDate.getUTCMonth(), day = d.closeDate.getUTCDate();
       return m < md[0] || (m === md[0] && day <= md[1]);
     }).reduce(function (s, d) { return s + d.amount; }, 0);
+    var geoTag = S.geo === 'us' ? ' · US' : ' · Intl';
     PERIODS.forEach(function (p) {
-      var v = val(agg.total, p), n = agg.total.n[p] || 0, sub;
+      var b = agg.total.b, v = val(b, p), n = b.n[p] || 0, sub;
       if (+p === CUR_YEAR) {
-        var pct = prevSamePeriod ? Math.round((v / prevSamePeriod - 1) * 100) : null;
-        sub = el('div', { class: 'sub' }, [n + ' deals · vs ', el('b', {}, [short(prevSamePeriod)]), ' same period ' + (CUR_YEAR - 1) + (pct === null ? '' : ' (' + (pct > 0 ? '+' : '') + pct + '%)')]);
+        var pct = prevSame ? Math.round((v / prevSame - 1) * 100) : null;
+        sub = el('div', { class: 'sub' }, [n + ' deals · vs ', el('b', {}, [short(prevSame)]), ' same period ' + (CUR_YEAR - 1) + (pct === null ? '' : ' (' + (pct > 0 ? '+' : '') + pct + '%)')]);
       } else if (p === 'all') {
         var first = agg.deals.reduce(function (m, d) { return Math.min(m, d.year); }, 9999);
         sub = el('div', { class: 'sub' }, [n + ' deals' + (first < 9999 ? ' since ' + first : '')]);
       } else {
-        var prior = agg.total.y[String(+p - 1)];
-        var yoy = prior ? Math.round((v / prior - 1) * 100) : null;
+        var prior = b.y[String(+p - 1)], yoy = prior ? Math.round((v / prior - 1) * 100) : null;
         sub = el('div', { class: 'sub' }, [n + ' deals' + (yoy === null ? '' : ' · ' + (yoy > 0 ? '+' : '') + yoy + '% YoY')]);
       }
-      box.appendChild(el('div', { class: 'kpi' }, [el('div', { class: 'label' }, [periodLabel(p) + (S.geo === 'us' ? ' · US' : ' · Intl')]), el('div', { class: 'value' }, [short(v)]), sub]));
+      box.appendChild(el('div', { class: 'kpi' }, [el('div', { class: 'label' }, [periodLabel(p) + geoTag]), el('div', { class: 'value' }, [short(v)]), sub]));
     });
+    var t = agg.total.t;
+    box.appendChild(el('div', { class: 'kpi opp' }, [
+      el('div', { class: 'label' }, ['SOM opportunity' + geoTag]),
+      el('div', { class: 'value' }, [short(t.somv)]),
+      el('div', { class: 'sub' }, [fmtInt.format(t.som) + ' SOM accts · ' + fmtInt.format(t.cust) + ' of ' + fmtInt.format(t.tam) + ' TAM are customers'])
+    ]));
   }
 
   // ---------- map ----------
+  var MAP_METRICS = PERIODS.concat(['somv']);
+  function mapLabel(p) { return p === 'somv' ? 'SOM $' : periodLabel(p); }
+  function mapVal(G, p) { if (!G) return 0; return p === 'somv' ? G.t.somv : val(G.b, p); }
   function step(v, max) { if (v <= 0 || !max) return -1; return Math.max(0, Math.min(4, Math.ceil((v / max) * 5) - 1)); }
   function renderPeriodControl() {
     var c = document.getElementById('periodControl'); c.innerHTML = '';
-    PERIODS.forEach(function (p) {
-      var b = el('button', { class: p === S.period ? 'active' : '' }, [periodLabel(p)]);
+    MAP_METRICS.forEach(function (p) {
+      var b = el('button', { class: p === S.period ? 'active' : '' }, [mapLabel(p)]);
       b.addEventListener('click', function () { S.period = p; render(); });
       c.appendChild(b);
     });
+    var opp = S.period === 'somv';
+    document.getElementById('mapTitle').textContent = opp ? 'Where the remaining opportunity is' : 'Where bookings land';
+    document.getElementById('legendText').textContent = opp ? 'Shade = SOM $ (remaining serviceable opportunity)' : 'Shade = bookings $ for the selected period';
+    var ramp = document.getElementById('legendRamp'); ramp.innerHTML = '';
+    (opp ? OPP : SEQ).forEach(function (c) { ramp.appendChild(el('span', { style: 'background:' + c })); });
   }
   function renderMap(agg) {
     var card = document.getElementById('mapCard');
     card.hidden = S.geo !== 'us';
     if (card.hidden) return;
     var grid = document.getElementById('tilemap'); grid.innerHTML = '';
-    var max = 0;
-    Object.keys(agg.geo).forEach(function (k) { max = Math.max(max, val(agg.geo[k].b, S.period)); });
+    var pal = S.period === 'somv' ? OPP : SEQ, max = 0;
+    Object.keys(agg.geo).forEach(function (k) { max = Math.max(max, mapVal(agg.geo[k], S.period)); });
     Object.keys(TILES).forEach(function (code) {
-      var g = agg.geo[code], v = g ? val(g.b, S.period) : 0, s = step(v, max);
-      var cls = 'tile' + (v > 0 ? ' has-value' : ' none') + (s >= 3 ? ' dark' : '') + (S.open[code] ? ' selected' : '');
+      var G = agg.geo[code], v = mapVal(G, S.period), s = step(v, max);
       var t = el('div', {
-        class: cls, style: 'grid-column:' + (TILES[code][0] + 1) + ';grid-row:' + (TILES[code][1] + 1) + (s >= 0 ? ';background:' + SEQ[s] : ''),
+        class: 'tile' + (v > 0 ? ' has-value' : ' none') + (s >= 3 ? ' dark' : '') + (S.open[code] ? ' selected' : ''),
+        style: 'grid-column:' + (TILES[code][0] + 1) + ';grid-row:' + (TILES[code][1] + 1) + (s >= 0 ? ';background:' + pal[s] : ''),
         tabindex: v > 0 ? '0' : null, role: v > 0 ? 'button' : null,
-        'aria-label': STATES[code] + ', ' + periodLabel(S.period) + ', ' + fmtMoney.format(v)
+        'aria-label': STATES[code] + ', ' + mapLabel(S.period) + ', ' + fmtMoney.format(v)
       }, [el('span', { class: 'st' }, [code]), v > 0 ? el('span', { class: 'amt' }, [short(v)]) : null]);
-      t.addEventListener('mouseenter', function (e) { showTip(e, code, g); });
+      t.addEventListener('mouseenter', function (e) { showTip(e, code, G); });
       t.addEventListener('mousemove', moveTip);
       t.addEventListener('mouseleave', hideTip);
       if (v > 0) activate(t, function () {
         S.open[code] = true; render();
-        var row = document.querySelector('tr[data-key="' + code + '"]');
+        var row = document.querySelector('#bkTable tr[data-key="' + code + '"]');
         if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
       grid.appendChild(t);
     });
   }
-  function showTip(e, code, g) {
+  function showTip(e, code, G) {
     var tip = document.getElementById('tip'); tip.innerHTML = '';
     tip.appendChild(el('div', { class: 't' }, [STATES[code]]));
     PERIODS.forEach(function (p) {
-      var v = g ? val(g.b, p) : 0, n = g ? (g.b.n[p] || 0) : 0;
+      var v = G ? val(G.b, p) : 0, n = G ? (G.b.n[p] || 0) : 0;
       tip.appendChild(el('div', { class: 'r' }, [periodLabel(p), el('b', {}, [short(v) + (n ? ' · ' + n : '')])]));
     });
+    tip.appendChild(el('div', { class: 'sep' }));
+    var t = G ? G.t : tamBucket();
+    tip.appendChild(el('div', { class: 'r' }, ['TAM / customers', el('b', {}, [fmtInt.format(t.tam) + ' / ' + fmtInt.format(t.cust)])]));
+    tip.appendChild(el('div', { class: 'r' }, ['SOM accts', el('b', {}, [fmtInt.format(t.som)])]));
+    tip.appendChild(el('div', { class: 'r' }, ['SOM $', el('b', {}, [short(t.somv)])]));
     tip.hidden = false; moveTip(e);
   }
   function moveTip(e) {
@@ -447,22 +544,19 @@
   }
   function hideTip() { document.getElementById('tip').hidden = true; }
 
-  // ---------- table ----------
+  // ---------- shared cells ----------
   function spark(b, firstYear) {
-    var w = 106, h = 26, pad = 3, ys = [];
+    var w = 96, h = 26, pad = 3, ys = [];
     for (var y = firstYear; y <= CUR_YEAR; y++) ys.push(b.y[String(y)] || 0);
-    var max = Math.max.apply(null, ys.concat([1])), min = Math.min.apply(null, ys.concat([0]));
+    var max = Math.max.apply(null, ys.concat([1])), min = 0;
     var pts = ys.map(function (v, i) {
-      var x = pad + (ys.length === 1 ? 0 : i * (w - pad * 2) / (ys.length - 1));
-      var yy = h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2);
-      return [x, yy];
+      return [pad + (ys.length === 1 ? 0 : i * (w - pad * 2) / (ys.length - 1)), h - pad - ((v - min) / (max - min || 1)) * (h - pad * 2)];
     });
-    var ns = 'http://www.w3.org/2000/svg';
-    var svg = document.createElementNS(ns, 'svg');
+    var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('aria-hidden', 'true');
     var base = document.createElementNS(ns, 'line');
     base.setAttribute('x1', pad); base.setAttribute('x2', w - pad); base.setAttribute('y1', h - pad); base.setAttribute('y2', h - pad);
-    base.setAttribute('stroke', 'var(--border)'); base.setAttribute('stroke-width', '1'); svg.appendChild(base);
+    base.setAttribute('stroke', 'var(--border)'); svg.appendChild(base);
     var path = document.createElementNS(ns, 'polyline');
     path.setAttribute('points', pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '));
     path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'var(--accent)'); path.setAttribute('stroke-width', '2');
@@ -474,23 +568,48 @@
     svg.appendChild(title);
     return svg;
   }
-  function numCell(b, p, colMax, label) {
+  function numCell(b, p, colMax, label, extraCls) {
     var v = val(b, p), n = b.n[p] || 0, s = step(v, colMax);
     var td = el('td', {
-      class: 'num' + (n ? ' has-value' : ' empty') + (s >= 3 ? ' dark' : ''),
+      class: 'num' + (n ? ' has-value' : ' empty') + (s >= 3 ? ' dark' : '') + (extraCls ? ' ' + extraCls : ''),
       style: s >= 0 ? 'background:' + SEQ[s] : null, tabindex: n ? '0' : null, role: n ? 'button' : null,
       'aria-label': n ? label + ', ' + periodLabel(p) + ', ' + fmtMoney.format(v) + ', ' + n + ' deals' : null
     }, [n ? short(v) : '—', n ? el('span', { class: 'n' }, [n + (n === 1 ? ' deal' : ' deals')]) : null]);
     if (n) activate(td, function (e) { e.stopPropagation(); openDrill(label, p, b.deals[p] || []); });
     return td;
   }
-  function yoyCell(b) {
-    var a = b.y[String(CUR_YEAR - 2)] || 0, c = b.y[String(CUR_YEAR - 1)] || 0;
-    var pct = a ? Math.round((c / a - 1) * 100) : 0;
-    var txt = !a && !c ? '' : !a ? 'new' : pct >= 300 ? (c / a).toFixed(1).replace(/\.0$/, '') + 'x' : (pct > 0 ? '+' : '') + pct + '%';
-    return el('td', { class: 'yoy', title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, [txt]);
+  function tamCell(t, col, colMax, extraCls) {
+    var v = tamVal(t, col.k);
+    var shade = col.k === 'somv' ? step(v, colMax) : -1;
+    var txt = col.pct ? (t && t.tam ? (v * 100).toFixed(1) + '%' : '—') : col.money ? (v ? short(v) : '—') : (v ? fmtInt.format(v) : '—');
+    return el('td', {
+      class: 'num plain' + (v ? '' : ' empty') + (shade >= 3 ? ' dark' : '') + (extraCls ? ' ' + extraCls : ''),
+      style: shade >= 0 ? 'background:' + OPP[shade] : null
+    }, [txt]);
   }
-  function sortVal(g) { return S.sortKey === 'name' ? geoName(g.key) : val(g.b, S.sortKey); }
+  function yoyText(b) {
+    var a = b.y[String(CUR_YEAR - 2)] || 0, c = b.y[String(CUR_YEAR - 1)] || 0;
+    if (!a && !c) return '';
+    if (!a) return 'new';
+    var pct = Math.round((c / a - 1) * 100);
+    return pct >= 300 ? (c / a).toFixed(1).replace(/\.0$/, '') + 'x' : (pct > 0 ? '+' : '') + pct + '%';
+  }
+  function yoyCell(b) { return el('td', { class: 'yoy', title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, [yoyText(b)]); }
+  function sortHeader(label, key, state, cls, onSort, title) {
+    var arrow = state.key === key ? (state.dir > 0 ? '▲' : '▼') : '';
+    var h = el('th', { class: (cls || '') + ' sortable', tabindex: '0', title: title || null,
+      'aria-sort': state.key === key ? (state.dir > 0 ? 'ascending' : 'descending') : 'none' },
+      [label, arrow ? el('span', { class: 'arrow' }, [arrow]) : null]);
+    activate(h, function () { onSort(key); });
+    return h;
+  }
+
+  // ---------- state x market table ----------
+  function sortVal(G, key) {
+    if (key === 'name') return geoName(G.key);
+    if (PERIODS.indexOf(key) !== -1) return val(G.b, key);
+    return tamVal(G.t, key);
+  }
   function renderTable(agg) {
     var table = document.getElementById('bkTable'); table.innerHTML = '';
     var wrap = table.parentNode, old = wrap.querySelector('.empty-state'); if (old) old.remove();
@@ -498,63 +617,134 @@
     var keys = Object.keys(agg.geo);
     if (!keys.length) {
       wrap.appendChild(el('div', { class: 'empty-state' }, [el('div', { class: 'glyph' }, [S.deals.length ? 'No matches' : 'No data yet']),
-        el('h2', {}, [S.deals.length ? 'Nothing booked for this filter' : 'The nightly HubSpot pull hasn’t run']), el('p', {}, [S.deals.length ? 'Try another market or bookings type.' : 'Once the scheduled job writes its first snapshot, data renders here.'])]));
+        el('h2', {}, [S.deals.length ? 'Nothing for this filter' : 'The nightly HubSpot pull hasn’t run']), el('p', {}, ['Try another market or bookings type.'])]));
       return;
     }
     var firstYear = Math.max(CUR_YEAR - 7, agg.deals.reduce(function (m, d) { return Math.min(m, d.year); }, CUR_YEAR));
+    var motionLbl = S.motion === 'all' ? 'Bookings (new logo + expansion)' : S.motion === 'new_logo' ? 'New logo bookings' : 'Expansion bookings';
 
-    var thead = el('thead'), hr = el('tr');
-    function th(label, key, cls) {
-      var arrow = S.sortKey === key ? (S.sortDir > 0 ? '▲' : '▼') : '';
-      var h = el('th', { class: (cls || '') + ' sortable', tabindex: '0', 'aria-sort': S.sortKey === key ? (S.sortDir > 0 ? 'ascending' : 'descending') : 'none' },
-        [label, arrow ? el('span', { class: 'arrow' }, [arrow]) : null]);
-      activate(h, function () { if (S.sortKey === key) S.sortDir = -S.sortDir; else { S.sortKey = key; S.sortDir = key === 'name' ? 1 : -1; } renderTable(aggregate()); });
-      return h;
-    }
-    hr.appendChild(th(S.geo === 'us' ? 'State' : 'Country', 'name', 'l'));
-    PERIODS.forEach(function (p) { hr.appendChild(th(periodLabel(p), p)); });
+    var thead = el('thead');
+    var gr = el('tr', { class: 'groups' });
+    gr.appendChild(el('th', { class: 'l' }));
+    gr.appendChild(el('th', { class: 'g-book', colspan: String(PERIODS.length + 2) }, [motionLbl]));
+    gr.appendChild(el('th', { class: 'g-opp divider', colspan: String(TAM_COLS.length) }, ['TAM opportunity (2027 model)']));
+    thead.appendChild(gr);
+    var hr = el('tr'), st = { key: S.sortKey, dir: S.sortDir };
+    var onSort = function (key) {
+      if (S.sortKey === key) S.sortDir = -S.sortDir; else { S.sortKey = key; S.sortDir = key === 'name' ? 1 : -1; }
+      renderTable(current());
+    };
+    hr.appendChild(sortHeader(S.geo === 'us' ? 'State' : 'Country', 'name', st, 'l', onSort));
+    PERIODS.forEach(function (p) { hr.appendChild(sortHeader(periodLabel(p), p, st, '', onSort)); });
     hr.appendChild(el('th', { title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, ['YoY ' + String(CUR_YEAR - 1).slice(2)]));
     hr.appendChild(el('th', { class: 'l' }, ['Trend ' + String(firstYear).slice(2) + '–' + String(CUR_YEAR).slice(2)]));
+    TAM_COLS.forEach(function (c, i) { hr.appendChild(sortHeader(c.label, c.k, st, i === 0 ? 'divider' : '', onSort, c.title)); });
     thead.appendChild(hr); table.appendChild(thead);
 
     var colMax = {};
     PERIODS.forEach(function (p) { colMax[p] = 0; keys.forEach(function (k) { colMax[p] = Math.max(colMax[p], val(agg.geo[k].b, p)); }); });
+    colMax.somv = 0; keys.forEach(function (k) { colMax.somv = Math.max(colMax.somv, agg.geo[k].t.somv); });
 
     var groups = keys.map(function (k) { return agg.geo[k]; });
     groups.sort(function (a, b) {
-      var x = sortVal(a), y = sortVal(b);
       if (a.key === '??') return 1; if (b.key === '??') return -1;
+      var x = sortVal(a, S.sortKey), y = sortVal(b, S.sortKey);
       return (x < y ? -1 : x > y ? 1 : 0) * S.sortDir;
     });
 
     var tbody = el('tbody');
-    groups.forEach(function (g) {
-      var name = geoName(g.key), isOpen = !!S.open[g.key];
-      var tr = el('tr', { class: 'state-row' + (isOpen ? ' open' : ''), 'data-key': g.key });
-      var nameTd = el('td', { class: 'name-cell', tabindex: '0', role: 'button', 'aria-expanded': String(isOpen) },
-        [el('span', { class: 'chev' }, ['▶']), name]);
-      activate(nameTd, function () { S.open[g.key] = !S.open[g.key]; render(); });
+    groups.forEach(function (G) {
+      var name = geoName(G.key), isOpen = !!S.open[G.key];
+      var tr = el('tr', { class: 'state-row' + (isOpen ? ' open' : ''), 'data-key': G.key });
+      var nameTd = el('td', { class: 'name-cell', tabindex: '0', role: 'button', 'aria-expanded': String(isOpen) }, [el('span', { class: 'chev' }, ['▶']), name]);
+      activate(nameTd, function () { S.open[G.key] = !S.open[G.key]; render(); });
       tr.appendChild(nameTd);
-      PERIODS.forEach(function (p) { tr.appendChild(numCell(g.b, p, colMax[p], name)); });
-      tr.appendChild(yoyCell(g.b));
-      tr.appendChild(el('td', { class: 'spark' }, [spark(g.b, firstYear)]));
+      PERIODS.forEach(function (p) { tr.appendChild(numCell(G.b, p, colMax[p], name)); });
+      tr.appendChild(yoyCell(G.b));
+      tr.appendChild(el('td', { class: 'spark' }, [spark(G.b, firstYear)]));
+      TAM_COLS.forEach(function (c, i) { tr.appendChild(tamCell(G.t, c, colMax.somv, i === 0 ? 'divider' : '')); });
       tbody.appendChild(tr);
       if (isOpen) {
-        MARKETS.filter(function (m) { return g.markets[m]; }).forEach(function (m) {
-          var mb = g.markets[m], mr = el('tr', { class: 'market-row' });
+        MARKETS.filter(function (m) { return G.markets[m]; }).forEach(function (m) {
+          var M = G.markets[m], mr = el('tr', { class: 'market-row' });
           mr.appendChild(el('td', { class: 'name-cell' }, [m, CARVE_OUTS[m] ? el('span', { class: 'tag' }, ['carve-out']) : null]));
-          PERIODS.forEach(function (p) { mr.appendChild(numCell(mb, p, 0, name + ' · ' + m)); });
-          mr.appendChild(yoyCell(mb));
-          mr.appendChild(el('td', { class: 'spark' }, [spark(mb, firstYear)]));
+          PERIODS.forEach(function (p) { mr.appendChild(numCell(M.b, p, 0, name + ' · ' + m)); });
+          mr.appendChild(yoyCell(M.b));
+          mr.appendChild(el('td', { class: 'spark' }, [spark(M.b, firstYear)]));
+          TAM_COLS.forEach(function (c, i) { mr.appendChild(tamCell(M.t, c, 0, i === 0 ? 'divider' : '')); });
           tbody.appendChild(mr);
         });
       }
     });
     var tot = el('tr', { class: 'totals-row' });
     tot.appendChild(el('td', { class: 'name-cell' }, ['Total']));
-    PERIODS.forEach(function (p) { tot.appendChild(numCell(agg.total, p, 0, 'Total')); });
-    tot.appendChild(yoyCell(agg.total));
-    tot.appendChild(el('td', { class: 'spark' }, [spark(agg.total, firstYear)]));
+    PERIODS.forEach(function (p) { tot.appendChild(numCell(agg.total.b, p, 0, 'Total')); });
+    tot.appendChild(yoyCell(agg.total.b));
+    tot.appendChild(el('td', { class: 'spark' }, [spark(agg.total.b, firstYear)]));
+    TAM_COLS.forEach(function (c, i) { tot.appendChild(tamCell(agg.total.t, c, 0, i === 0 ? 'divider' : '')); });
+    tbody.appendChild(tot);
+    table.appendChild(tbody);
+  }
+
+  // ---------- reps ----------
+  function repAggregate(opts) {
+    var on = function (m) { return opts.markets.indexOf(m) !== -1; };
+    var reps = {}, total = bucket();
+    S.deals.forEach(function (d) {
+      if (opts.motion !== 'all' && d.motion !== opts.motion) return;
+      if (!on(d.market)) return;
+      if (opts.geo && geoKeyOf(d.isUS, d.state, d.country, opts.geo) === null) return;
+      var R = reps[d.owner] || (reps[d.owner] = { name: d.owner, active: d.ownerActive, b: bucket() });
+      add(R.b, d); add(total, d);
+    });
+    return { reps: reps, total: total };
+  }
+  function renderReps() {
+    var motionLbl = S.motion === 'all' ? 'new logo + expansion' : S.motion === 'new_logo' ? 'new logo' : 'expansion';
+    document.getElementById('repTitle').textContent = 'Rep performance, ' + motionLbl;
+    var ra = repAggregate({ motion: S.motion, markets: S.markets, geo: S.geo });
+    var table = document.getElementById('repTable'); table.innerHTML = '';
+    var list = Object.keys(ra.reps).map(function (k) { return ra.reps[k]; }).filter(function (R) {
+      if (S.activeOnly && R.active !== true) return false;
+      return YEARS.some(function (y) { return R.b.y[String(y)]; }) || R.active === true;
+    });
+    var st = { key: S.repSortKey, dir: S.repSortDir };
+    var onSort = function (key) {
+      if (S.repSortKey === key) S.repSortDir = -S.repSortDir; else { S.repSortKey = key; S.repSortDir = key === 'name' ? 1 : -1; }
+      renderReps();
+    };
+    var thead = el('thead'), hr = el('tr');
+    hr.appendChild(sortHeader('Rep', 'name', st, 'l', onSort));
+    PERIODS.forEach(function (p) { hr.appendChild(sortHeader(periodLabel(p), p, st, '', onSort)); });
+    hr.appendChild(el('th', { title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, ['YoY ' + String(CUR_YEAR - 1).slice(2)]));
+    hr.appendChild(sortHeader('Avg deal ' + String(YEARS[0]).slice(2) + '–' + String(CUR_YEAR).slice(2), 'avg', st, '', onSort, 'Average deal size across ' + YEARS[0] + ' to ' + CUR_YEAR + ' YTD'));
+    hr.appendChild(el('th', { class: 'l' }, ['Trend']));
+    thead.appendChild(hr); table.appendChild(thead);
+    function avg3(b) {
+      var s = 0, n = 0; YEARS.forEach(function (y) { s += b.y[String(y)] || 0; n += b.n[String(y)] || 0; }); return n ? s / n : 0;
+    }
+    function sv(R) { return S.repSortKey === 'name' ? R.name : S.repSortKey === 'avg' ? avg3(R.b) : val(R.b, S.repSortKey); }
+    list.sort(function (a, b) { var x = sv(a), y = sv(b); return (x < y ? -1 : x > y ? 1 : 0) * S.repSortDir; });
+    var colMax = {};
+    PERIODS.forEach(function (p) { colMax[p] = 0; list.forEach(function (R) { colMax[p] = Math.max(colMax[p], val(R.b, p)); }); });
+    var firstYear = CUR_YEAR - 7, tbody = el('tbody');
+    list.forEach(function (R) {
+      var tr = el('tr');
+      tr.appendChild(el('td', { class: 'name-cell', style: 'font-weight:600' }, [R.name, R.active === false ? el('span', { class: 'tag former' }, ['former']) : null]));
+      PERIODS.forEach(function (p) { tr.appendChild(numCell(R.b, p, colMax[p], R.name)); });
+      tr.appendChild(yoyCell(R.b));
+      var a = avg3(R.b);
+      tr.appendChild(el('td', { class: 'num plain' + (a ? '' : ' empty') }, [a ? short(a) : '—']));
+      tr.appendChild(el('td', { class: 'spark' }, [spark(R.b, firstYear)]));
+      tbody.appendChild(tr);
+    });
+    var tot = el('tr', { class: 'totals-row' });
+    tot.appendChild(el('td', { class: 'name-cell' }, ['Total']));
+    PERIODS.forEach(function (p) { tot.appendChild(numCell(ra.total, p, 0, 'All reps')); });
+    tot.appendChild(yoyCell(ra.total));
+    var ta = avg3(ra.total);
+    tot.appendChild(el('td', { class: 'num plain' }, [ta ? short(ta) : '—']));
+    tot.appendChild(el('td', { class: 'spark' }, [spark(ra.total, firstYear)]));
     tbody.appendChild(tot);
     table.appendChild(tbody);
   }
@@ -563,17 +753,16 @@
   function openDrill(label, p, deals) {
     document.getElementById('modalTitle').textContent = label + ' · ' + periodLabel(p);
     var motion = S.motion === 'all' ? 'New logo + expansion' : (S.motion === 'new_logo' ? 'New logo' : 'Expansion');
-    var mkt = S.market === 'core' ? 'Core markets' : (S.market || 'All markets');
-    document.getElementById('modalMeta').textContent = motion + ' · ' + mkt;
+    document.getElementById('modalMeta').textContent = motion + ' · ' + marketsLabel();
     var body = document.getElementById('modalBody'); body.innerHTML = '';
-    var sorted = deals.slice().sort(function (a, b) { return b.amount - a.amount; });
-    var total = 0;
+    var sorted = deals.slice().sort(function (a, b) { return b.amount - a.amount; }), total = 0;
     sorted.forEach(function (d) {
       total += d.amount;
+      var where = d.isUS ? (d.state || 'state not set') : d.country;
       body.appendChild(el('div', { class: 'deal-row' }, [
         el('div', {}, [
           el('div', { class: 'deal-name' }, [el('a', { href: HUBSPOT_DEAL_URL + d.id, target: '_blank', rel: 'noopener' }, [d.name])]),
-          el('div', { class: 'deal-sub' }, [d.company + ' · ' + d.market + ' · ' + (d.motion === 'new_logo' ? 'New logo' : 'Expansion') + ' · ' + d.owner])
+          el('div', { class: 'deal-sub' }, [d.company + ' · ' + where + ' · ' + d.market + ' · ' + (d.motion === 'new_logo' ? 'New logo' : 'Expansion') + ' · ' + d.owner])
         ]),
         el('div', { class: 'deal-date' }, [d.closeDate ? d.closeDate.toISOString().slice(0, 10) : '']),
         el('div', { class: 'deal-amount' }, [fmtMoney.format(d.amount)])
@@ -585,7 +774,108 @@
   function closeDrill() { document.getElementById('overlay').hidden = true; }
   document.getElementById('modalClose').addEventListener('click', closeDrill);
   document.getElementById('overlay').addEventListener('click', function (e) { if (e.target.id === 'overlay') closeDrill(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrill(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeDrill(); closeMs(); } });
+
+  // ---------- market multi-select ----------
+  function sameSet(a, b) { return a.length === b.length && a.every(function (x) { return b.indexOf(x) !== -1; }); }
+  function marketsLabel() {
+    if (sameSet(S.markets, MARKETS)) return 'All markets';
+    if (sameSet(S.markets, CORE)) return 'Core (ISP + core infra)';
+    if (sameSet(S.markets, CARVE)) return 'Carve-outs';
+    if (!S.markets.length) return 'No markets';
+    if (S.markets.length === 1) return S.markets[0];
+    return S.markets.length + ' markets';
+  }
+  function renderMs() {
+    document.getElementById('msLabel').textContent = marketsLabel();
+    var panel = document.getElementById('msPanel'); panel.innerHTML = '';
+    var presets = el('div', { class: 'ms-presets' });
+    [['All', MARKETS], ['Core', CORE], ['Carve-outs', CARVE], ['None', []]].forEach(function (p) {
+      var b = el('button', { type: 'button' }, [p[0]]);
+      b.addEventListener('click', function () { S.markets = p[1].slice(); S.open = {}; render(); });
+      presets.appendChild(b);
+    });
+    panel.appendChild(presets);
+    [['Core', CORE], ['Carve-outs', CARVE], ['Unscoped', UNSCOPED]].forEach(function (grp) {
+      panel.appendChild(el('div', { class: 'ms-group' }, [grp[0]]));
+      grp[1].forEach(function (m) {
+        var cb = el('input', { type: 'checkbox' }); cb.checked = marketOn(m);
+        cb.addEventListener('change', function () {
+          if (cb.checked) { if (!marketOn(m)) S.markets.push(m); } else S.markets = S.markets.filter(function (x) { return x !== m; });
+          render();
+        });
+        panel.appendChild(el('label', { class: 'ms-opt' }, [cb, m]));
+      });
+    });
+  }
+  function closeMs() { document.getElementById('msPanel').hidden = true; document.getElementById('msBtn').setAttribute('aria-expanded', 'false'); }
+  document.getElementById('msBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var p = document.getElementById('msPanel'); p.hidden = !p.hidden;
+    this.setAttribute('aria-expanded', String(!p.hidden));
+  });
+  document.getElementById('msPanel').addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', closeMs);
+
+  // ---------- Excel export ----------
+  function exportExcel() {
+    if (!window.XLSX) { alert('Excel library failed to load. Check your connection and try again.'); return; }
+    var nl = { geo: null, motion: 'new_logo', markets: MARKETS }, ex = { geo: null, motion: 'expansion', markets: MARKETS };
+    var rowsSM = [], rowsS = [];
+    function bookCols(prefix, b) {
+      var o = {};
+      PERIODS.forEach(function (p) { o[prefix + ' $ ' + periodLabel(p)] = b ? Math.round(val(b, p)) : 0; });
+      PERIODS.forEach(function (p) { o[prefix + ' deals ' + periodLabel(p)] = b ? (b.n[p] || 0) : 0; });
+      return o;
+    }
+    function tamCols(t) {
+      t = t || tamBucket();
+      return { 'TAM accounts': t.tam, 'Customers': t.cust, 'Prospects': t.prosp, 'SAM accounts': t.sam, 'SOM accounts': t.som,
+        'SOM $': Math.round(t.somv), 'Penetration (cust / TAM)': t.tam ? +(t.cust / t.tam).toFixed(4) : null };
+    }
+    ['us', 'intl'].forEach(function (geo) {
+      nl.geo = geo; ex.geo = geo;
+      var A = aggregate(nl), B = aggregate(ex);
+      var keys = Object.keys(A.geo).concat(Object.keys(B.geo)).filter(function (k, i, arr) { return arr.indexOf(k) === i; });
+      keys.sort(function (a, b) { if (a === '??') return 1; if (b === '??') return -1; var x = geoName(a, geo), y = geoName(b, geo); return x < y ? -1 : x > y ? 1 : 0; });
+      keys.forEach(function (k) {
+        var GA = A.geo[k], GB = B.geo[k];
+        var base = { 'Geography': geo === 'us' ? 'US' : 'International', 'Code': geo === 'us' ? k : '', 'State / Country': geoName(k, geo) };
+        rowsS.push(Object.assign({}, base, bookCols('New logo', GA && GA.b), bookCols('Expansion', GB && GB.b), tamCols((GA || GB).t)));
+        MARKETS.forEach(function (m) {
+          var MA = GA && GA.markets[m], MB = GB && GB.markets[m];
+          if (!MA && !MB) return;
+          rowsSM.push(Object.assign({}, base, { 'Market': m, 'Carve-out': CARVE_OUTS[m] ? 'Yes' : 'No' },
+            bookCols('New logo', MA && MA.b), bookCols('Expansion', MB && MB.b), tamCols((MA || MB).t)));
+        });
+      });
+    });
+    var ra = repAggregate({ motion: 'new_logo', markets: MARKETS, geo: null }), rowsR = [];
+    Object.keys(ra.reps).sort().forEach(function (k) {
+      var R = ra.reps[k], o = { 'Rep': R.name, 'Status': R.active === true ? 'Current' : R.active === false ? 'Former' : '' };
+      PERIODS.forEach(function (p) { o['New logo $ ' + periodLabel(p)] = Math.round(val(R.b, p)); o['Deals ' + periodLabel(p)] = R.b.n[p] || 0; });
+      rowsR.push(o);
+    });
+    var defs = Array.from(document.querySelectorAll('.notes li')).map(function (li) { return { 'Definitions': li.textContent }; });
+    defs.unshift({ 'Definitions': 'Exported ' + NOW.toISOString().slice(0, 10) + '. Bookings data as of ' + (S.meta ? new Date(S.meta.timestamp).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'n/a') + '. All markets, both geographies, regardless of on-screen filters.' });
+
+    var wb = XLSX.utils.book_new();
+    [['State x Market', rowsSM], ['State summary', rowsS], ['Reps (new logo)', rowsR], ['Definitions', defs]].forEach(function (s) {
+      var ws = XLSX.utils.json_to_sheet(s[1]);
+      var hdr = s[1].length ? Object.keys(s[1][0]) : [];
+      ws['!cols'] = hdr.map(function (h) { return { wch: Math.max(10, Math.min(s[0] === 'Definitions' ? 160 : 28, h.length + 2)) }; });
+      var range = ws['!ref'] ? XLSX.utils.decode_range(ws['!ref']) : null;
+      if (range) for (var C = 0; C <= range.e.c; C++) {
+        var h = hdr[C] || '', fmt = /\$/.test(h) ? '$#,##0' : /Penetration/.test(h) ? '0.0%' : null;
+        if (!fmt) continue;
+        for (var R = 1; R <= range.e.r; R++) { var c = ws[XLSX.utils.encode_cell({ r: R, c: C })]; if (c && typeof c.v === 'number') c.z = fmt; }
+      }
+      if (s[0] !== 'Definitions') ws['!autofilter'] = { ref: ws['!ref'] };
+      XLSX.utils.book_append_sheet(wb, ws, s[0]);
+    });
+    XLSX.writeFile(wb, 'VETRO Bookings and TAM by State ' + NOW.toISOString().slice(0, 10) + '.xlsx');
+  }
+  document.getElementById('exportBtn').addEventListener('click', exportExcel);
 
   // ---------- controls ----------
   function wireGroup(id, key) {
@@ -597,12 +887,7 @@
   }
   wireGroup('motionControl', 'motion');
   wireGroup('geoControl', 'geo');
-  (function () {
-    var sel = document.getElementById('marketSelect');
-    [['', 'All markets'], ['core', 'Core only (excl. carve-outs)']].concat(MARKETS.map(function (m) { return [m, m + (CARVE_OUTS[m] ? ' (carve-out)' : '')]; }))
-      .forEach(function (o) { sel.appendChild(el('option', { value: o[0] }, [o[1]])); });
-    sel.addEventListener('change', function () { S.market = sel.value; render(); });
-  })();
+  document.getElementById('activeOnly').addEventListener('change', function () { S.activeOnly = this.checked; renderReps(); });
 
   function renderBadge() {
     var badge = document.getElementById('refreshBadge'), t = document.getElementById('refreshText');
@@ -612,30 +897,37 @@
     var stamp = ts.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     if (S.meta.status === 'failed') { badge.className = 'refresh-badge failed'; t.textContent = 'Last pull failed. Showing data as of ' + stamp; }
     else if (age > 36) { badge.className = 'refresh-badge stale'; t.textContent = 'Stale. Data as of ' + stamp; }
-    else t.textContent = 'Data as of ' + stamp;
+    else t.textContent = 'Bookings as of ' + stamp;
   }
 
   function render() {
-    var agg = aggregate();
+    var agg = current();
+    renderMs();
     renderKpis(agg);
     renderPeriodControl();
     renderMap(agg);
     renderTable(agg);
+    renderReps();
   }
 
-  async function loadData() {
+  async function fetchAll(table) {
     var rows = [], from = 0, size = 1000;
     while (true) {
-      var res = await sb.from('bookings_deals').select('*').order('hubspot_deal_id').range(from, from + size - 1);
+      var res = await sb.from(table).select('*').order(table === 'bookings_deals' ? 'hubspot_deal_id' : 'id').range(from, from + size - 1);
       if (res.error) throw new Error(res.error.message);
       rows = rows.concat(res.data || []);
       if (!res.data || res.data.length < size) break;
       from += size;
     }
-    S.deals = rows.map(rowToDeal);
-    var meta = await sb.from('bookings_meta').select('payload').eq('key', 'last_refresh').maybeSingle();
-    if (meta.error) throw new Error(meta.error.message);
-    S.meta = meta.data ? meta.data.payload : null;
+    return rows;
+  }
+  async function loadData() {
+    var parts = await Promise.all([fetchAll('bookings_deals'), fetchAll('tam_state_market'),
+      sb.from('bookings_meta').select('payload').eq('key', 'last_refresh').maybeSingle()]);
+    S.deals = parts[0].map(rowToDeal);
+    S.tam = parts[1].map(rowToTam);
+    if (parts[2].error) throw new Error(parts[2].error.message);
+    S.meta = parts[2].data ? parts[2].data.payload : null;
   }
 
   document.getElementById('signInBtn').addEventListener('click', async function () {
