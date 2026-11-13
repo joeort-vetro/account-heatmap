@@ -389,7 +389,7 @@
         var yoy = prior ? Math.round((v / prior - 1) * 100) : null;
         sub = el('div', { class: 'sub' }, [n + ' deals' + (yoy === null ? '' : ' · ' + (yoy > 0 ? '+' : '') + yoy + '% YoY')]);
       }
-      box.appendChild(el('div', { class: 'kpi' }, [el('div', { class: 'label' }, [periodLabel(p)]), el('div', { class: 'value' }, [short(v)]), sub]));
+      box.appendChild(el('div', { class: 'kpi' }, [el('div', { class: 'label' }, [periodLabel(p) + (S.geo === 'us' ? ' · US' : ' · Intl')]), el('div', { class: 'value' }, [short(v)]), sub]));
     });
   }
 
@@ -486,7 +486,8 @@
   }
   function yoyCell(b) {
     var a = b.y[String(CUR_YEAR - 2)] || 0, c = b.y[String(CUR_YEAR - 1)] || 0;
-    var txt = !a && !c ? '' : !a ? 'new' : (Math.round((c / a - 1) * 100) > 0 ? '+' : '') + Math.round((c / a - 1) * 100) + '%';
+    var pct = a ? Math.round((c / a - 1) * 100) : 0;
+    var txt = !a && !c ? '' : !a ? 'new' : pct >= 300 ? (c / a).toFixed(1).replace(/\.0$/, '') + 'x' : (pct > 0 ? '+' : '') + pct + '%';
     return el('td', { class: 'yoy', title: (CUR_YEAR - 1) + ' vs ' + (CUR_YEAR - 2) }, [txt]);
   }
   function sortVal(g) { return S.sortKey === 'name' ? geoName(g.key) : val(g.b, S.sortKey); }
