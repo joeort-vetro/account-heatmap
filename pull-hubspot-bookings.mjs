@@ -18,8 +18,9 @@
 //             close date, and closed-won deals dated in the future (pre-booked
 //             multi-year escalator years).
 //
-// Geography = the deal's primary associated company. HQ state, not service
-// footprint: a multi-state operator's whole deal lands in its HQ state.
+// Geography = the deal's primary associated company's State/Region (`state`),
+// not service footprint: a multi-state operator's whole deal lands in the state
+// on its company record. No fallback fields: blank or non-US State/Region stays unmapped.
 //
 // Env vars (GitHub Actions repo secrets, shared with the other pulls):
 //   HUBSPOT_PRIVATE_APP_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
@@ -73,7 +74,8 @@ const US = {
 };
 const NAME_TO_CODE = Object.fromEntries(Object.entries(US).map(([k, v]) => [v.toLowerCase(), k]));
 function stateCode(c) {
-  for (const raw of [c.hs_state_code, c.state, c.state__u_s__]) {
+  // State/Region (`state`) only. No fallback: a blank stays unmapped.
+  for (const raw of [c.state]) {
     const s = (raw || "").trim();
     if (!s) continue;
     if (US[s.toUpperCase()]) return s.toUpperCase();

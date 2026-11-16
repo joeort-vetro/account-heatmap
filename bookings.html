@@ -216,7 +216,7 @@
   <header class="page">
     <div>
       <h1>Bookings and TAM by State</h1>
-      <p class="subtitle">What VETRO has booked by HQ state and market, next to the remaining opportunity in each. Bookings refresh nightly from HubSpot. TAM source: 2027 TAM (claude build)_Active (7).xlsx.</p>
+      <p class="subtitle">What VETRO has booked by state and market, next to the remaining opportunity in each. Bookings refresh nightly from HubSpot. TAM source: 2027 TAM (claude build)_Active (7).xlsx.</p>
     </div>
     <div id="refreshBadge" class="refresh-badge"><span class="dot"></span><span id="refreshText">Loading&hellip;</span></div>
   </header>
@@ -283,7 +283,7 @@
         <li><b>New logo</b> = New Business pipeline, Closed Won, deal Amount (ARR). Ties to the TAM model's "New Biz Deals (HS)" tab deal for deal (1/1/2024 to 10/15/2026: 148 of 148, same amounts). One extra here: "Zayo Group - 2024 - SOW (Phase I POC)", $30K, which the model excludes as non-recurring.</li>
         <li><b>Expansion</b> = Expansion pipeline Upsell deals, plus pre-2025 mid-contract upsells booked in the Renewal pipeline (net recurring change). Mid-contract downgrades are excluded, so this is gross upsell. The Expansion pipeline starts in 2025.</li>
         <li><b>Excluded:</b> renewals, price-increase escalators, non-recurring-only and partner pipelines, deals with no close date, and closed-won deals dated in the future (pre-booked out-years of multi-year contracts).</li>
-        <li><b>State</b> = the deal's or account's primary company HQ state. A multi-state operator lands entirely in its HQ state, not its service footprint.</li>
+        <li><b>State</b> = the State/Region field on the deal's primary associated company in HubSpot. A multi-state operator lands entirely in the state recorded on its company record, not its service footprint.</li>
         <li><b>Market</b> = the 2027 Updated Sub-Vertical from the TAM model. Bookings companies use the model's classification; companies outside it are mapped from their HubSpot sub-vertical with the model's crosswalk.</li>
         <li><b>Carve-outs</b> (tagged) = Co-op, Engineering Firm, Government. International is its own view; TAM covers US and Canada only.</li>
         <li><b>TAM accounts</b> = all companies in the model. <b>Customers</b> = lifecycle Customer. <b>Prospects</b> = TAM less customers. <b>SAM</b> = prospects after the model's fiber and mapping screens. <b>SOM</b> = SAM after the fiber share, BDC, network-ownership and government-population screens. <b>SOM $</b> = SOM accounts × the segment's average initial new-logo ARR (the model's method). <b>Penetration</b> = customers ÷ TAM accounts.</li>
