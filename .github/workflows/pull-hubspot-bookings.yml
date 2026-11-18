@@ -2,8 +2,8 @@ name: Daily HubSpot pull (bookings by state)
 
 on:
   schedule:
-    # Same 11:00 UTC window as the account-heatmap pull -- before the workday starts.
-    - cron: "0 11 * * *"
+    # 09:xx UTC (4-5am ET), off the :00 mark. GitHub delays scheduled runs by hours at the top of the hour, so this aims to land by ~7am ET.
+    - cron: "37 9 * * *"
   workflow_dispatch: {}
 
 jobs:

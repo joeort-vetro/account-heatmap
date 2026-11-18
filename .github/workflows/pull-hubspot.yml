@@ -2,8 +2,8 @@ name: Daily HubSpot pull
 
 on:
   schedule:
-    # 11:00 UTC = 6-7am US Eastern depending on DST -- before the workday starts.
-    - cron: "0 11 * * *"
+    # 09:xx UTC (4-5am ET), off the :00 mark. GitHub delays scheduled runs by hours at the top of the hour, so this aims to land by ~7am ET.
+    - cron: "17 9 * * *"
   workflow_dispatch: {}
 
 jobs:
